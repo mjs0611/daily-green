@@ -1,4 +1,4 @@
-import { PlantState, PlantStage, PlantStats } from "@/types/plant";
+import { PlantState, PlantStage, PlantStats, MissionResult } from "@/types/plant";
 import { getTodayMissions } from "./missions";
 import { format, isYesterday, parseISO, differenceInCalendarDays } from "date-fns";
 
@@ -39,6 +39,7 @@ export function getInitialState(): PlantState {
     lastCareDate: null,
     lastCareTime: null,
     adLastWatched: null,
+    lastLoginBonusDate: null,
     completedMissions: [],
     todayMissions: getTodayMissions(today),
     todayMissionsDate: today,
@@ -58,6 +59,7 @@ export function loadState(): PlantState {
     // Migrate old state missing new fields
     if (state.lastCareDate === undefined) state.lastCareDate = null;
     if (state.adLastWatched === undefined) state.adLastWatched = null;
+    if (state.lastLoginBonusDate === undefined) state.lastLoginBonusDate = null;
 
     const today = format(new Date(), 'yyyy-MM-dd');
 
@@ -105,13 +107,30 @@ export function saveState(state: PlantState): void {
 }
 
 
+// Apply XP to state, handling level up chain
+function applyXp(state: PlantState, xp: number): PlantState {
+  let { stage, xpRequired } = state;
+  let finalXp = state.xp + xp;
+
+  while (finalXp >= xpRequired && stage !== 'special') {
+    finalXp -= xpRequired;
+    const currentIndex = STAGE_ORDER.indexOf(stage);
+    stage = STAGE_ORDER[Math.min(currentIndex + 1, STAGE_ORDER.length - 1)];
+    xpRequired = XP_REQUIRED[stage];
+  }
+
+  return { ...state, xp: finalXp, xpRequired, stage };
+}
+
 export function completeMission(
   state: PlantState,
   missionId: string,
   statEffect: Partial<PlantStats>,
   xpReward: number
-): PlantState {
-  if (state.completedMissions.includes(missionId) || state.isDead) return state;
+): MissionResult {
+  if (state.completedMissions.includes(missionId) || state.isDead) {
+    return { state, luckyBonus: false, xpGained: 0 };
+  }
 
   const today = format(new Date(), 'yyyy-MM-dd');
 
@@ -120,7 +139,6 @@ export function completeMission(
   let newLastCareDate = state.lastCareDate;
 
   if (state.lastCareDate !== today) {
-    // First mission today
     if (state.lastCareDate) {
       const lastDate = parseISO(state.lastCareDate);
       newStreak = isYesterday(lastDate) ? state.streak + 1 : 1;
@@ -136,48 +154,53 @@ export function completeMission(
     health: Math.min(100, state.stats.health + (statEffect.health ?? 0)),
   };
 
-  const newXp = state.xp + xpReward;
+  // Lucky bonus: 20% chance of 2x XP
+  const luckyBonus = Math.random() < 0.2;
+  const xpGained = luckyBonus ? xpReward * 2 : xpReward;
+
   const completedMissions = [...state.completedMissions, missionId];
-  // Caring today always recovers wilting
-  const isWilting = false;
 
-  let { stage, xpRequired } = state;
-  let finalXp = newXp;
-
-  if (newXp >= xpRequired && stage !== 'special') {
-    const currentIndex = STAGE_ORDER.indexOf(stage);
-    stage = STAGE_ORDER[Math.min(currentIndex + 1, STAGE_ORDER.length - 1)];
-    xpRequired = XP_REQUIRED[stage];
-    finalXp = newXp - state.xpRequired;
-  }
-
-  return {
+  let next: PlantState = {
     ...state,
     stats: newStats,
-    xp: finalXp,
-    xpRequired,
-    stage,
     completedMissions,
     lastCareDate: newLastCareDate,
     streak: newStreak,
-    isWilting,
+    isWilting: false,
     isDead: false,
   };
+  next = applyXp(next, xpGained);
+
+  return { state: next, luckyBonus, xpGained };
 }
 
-export function applyAdBoost(state: PlantState): PlantState {
-  const boostedStats: PlantStats = {
-    water: Math.min(100, state.stats.water + 20),
-    sunlight: Math.min(100, state.stats.sunlight + 20),
-    health: Math.min(100, state.stats.health + 20),
-  };
-  return {
-    ...state,
-    stats: boostedStats,
-    xp: Math.min(state.xpRequired - 1, state.xp + 30),
-    isWilting: false,
-    adLastWatched: new Date().toISOString(),
-  };
+// AD_XP: watching a rewarded ad directly boosts growth (can trigger level up)
+const AD_XP_REWARD = 50;
+
+export function applyAdBoost(state: PlantState): { state: PlantState; xpGained: number } {
+  let next = applyXp(state, AD_XP_REWARD);
+  next = { ...next, isWilting: false, adLastWatched: new Date().toISOString() };
+  return { state: next, xpGained: AD_XP_REWARD };
+}
+
+// Daily login bonus XP (increases with streak)
+function loginBonusXp(streak: number): number {
+  if (streak >= 30) return 30;
+  if (streak >= 7) return 20;
+  if (streak >= 3) return 15;
+  return 10;
+}
+
+export function claimLoginBonus(
+  state: PlantState
+): { state: PlantState; bonusXp: number } | null {
+  const today = format(new Date(), 'yyyy-MM-dd');
+  if (state.lastLoginBonusDate === today || state.isDead) return null;
+
+  const bonusXp = loginBonusXp(state.streak);
+  let next = applyXp(state, bonusXp);
+  next = { ...next, lastLoginBonusDate: today };
+  return { state: next, bonusXp };
 }
 
 export function resetPlant(): PlantState {

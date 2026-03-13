@@ -2,7 +2,7 @@
 import { useEffect, useState, useCallback, useRef } from "react";
 import { Top, Button, Toast } from "@toss/tds-mobile";
 import { PlantState } from "@/types/plant";
-import { loadState, saveState, completeMission, applyAdBoost, resetPlant, STAGE_INFO, isAdAvailable } from "@/lib/plantState";
+import { loadState, saveState, completeMission, applyAdBoost, claimLoginBonus, resetPlant, STAGE_INFO, isAdAvailable } from "@/lib/plantState";
 import { getMissionById } from "@/lib/missions";
 import { haptic, logEvent } from "@/lib/bridge";
 import PlantDisplay from "@/components/PlantDisplay";
@@ -33,13 +33,25 @@ export default function HomePage() {
     toastTimerRef.current = setTimeout(() => setToast(prev => ({ ...prev, open: false })), 2500);
   }, []);
 
-  // 앱 진입 시 상태 로드 + analytics + 온보딩 확인
+  // 앱 진입 시 상태 로드 + analytics + 온보딩 확인 + 일일 접속 보너스
   useEffect(() => {
     const isOnboarded = localStorage.getItem(ONBOARDED_KEY) === "true";
     setOnboarded(isOnboarded);
     const state = loadState();
-    setPlant(state);
+
+    // 일일 접속 보너스
+    const bonusResult = claimLoginBonus(state);
+    if (bonusResult) {
+      setPlant(bonusResult.state);
+      setTimeout(() => {
+        openToast(`🎁 오늘의 접속 보너스 +${bonusResult.bonusXp} XP`);
+      }, 2000); // 스플래시 이후 표시
+    } else {
+      setPlant(state);
+    }
+
     logEvent("screen_view", { screen: "home", stage: state.stage, streak: state.streak });
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleOnboardingStart = () => {
@@ -80,7 +92,7 @@ export default function HomePage() {
     const mission = getMissionById(missionId);
     if (!mission) return;
     const prevStage = plant.stage;
-    const newState = completeMission(plant, missionId, mission.statEffect, mission.xpReward);
+    const { state: newState, luckyBonus, xpGained } = completeMission(plant, missionId, mission.statEffect, mission.xpReward);
 
     if (newState.stage !== prevStage) {
       setJustLeveledUp(true);
@@ -88,15 +100,19 @@ export default function HomePage() {
       openToast(`🎊 ${STAGE_INFO[newState.stage].name}으로 레벨 업!`);
       logEvent("level_up", { from: prevStage, to: newState.stage, streak: newState.streak });
       setTimeout(() => setJustLeveledUp(false), 2500);
+    } else if (luckyBonus) {
+      haptic("confetti");
+      openToast(`🍀 행운! ${mission.emoji} ${mission.label} 2배 XP +${xpGained}`);
     } else {
       haptic("success");
-      openToast(`${mission.emoji} ${mission.label} 완료! +${mission.xpReward} XP`);
+      openToast(`${mission.emoji} ${mission.label} 완료! +${xpGained} XP`);
     }
 
     logEvent("mission_complete", {
       mission_id: missionId,
       mission_label: mission.label,
-      xp_reward: mission.xpReward,
+      xp_gained: xpGained,
+      lucky_bonus: luckyBonus,
       stage: newState.stage,
     });
 
@@ -105,10 +121,18 @@ export default function HomePage() {
 
   const handleAdComplete = useCallback(() => {
     if (!plant) return;
-    setPlant(applyAdBoost(plant));
-    haptic("success");
-    openToast('📺 광고 보상 획득! 스탯 +20');
-    logEvent("ad_rewarded", { stage: plant.stage });
+    const { state: newState, xpGained } = applyAdBoost(plant);
+    const leveledUp = newState.stage !== plant.stage;
+    setPlant(newState);
+    haptic(leveledUp ? "confetti" : "success");
+    if (leveledUp) {
+      setJustLeveledUp(true);
+      openToast(`🎊 ${STAGE_INFO[newState.stage].name}으로 레벨 업!`);
+      setTimeout(() => setJustLeveledUp(false), 2500);
+    } else {
+      openToast(`📺 광고 보상! 성장 XP +${xpGained}`);
+    }
+    logEvent("ad_rewarded", { stage: plant.stage, xp_gained: xpGained });
   }, [plant, openToast]);
 
   const handleReset = useCallback(() => {

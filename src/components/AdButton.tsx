@@ -141,7 +141,7 @@ export default function AdButton({ onAdComplete, adAvailable }: Props) {
             onClick={handleWatch}
 
           >
-            📺 광고 보고 스탯 +20 받기
+            📺 광고 보고 성장 XP +50 받기
           </Button>
         ) : (
           <div className="py-3 px-4 rounded-2xl bg-gray-100 dark:bg-gray-700 flex items-center justify-center gap-2">

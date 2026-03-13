@@ -20,13 +20,20 @@ export interface PlantState {
   xp: number;
   xpRequired: number;
   streak: number;
-  lastCareDate: string | null;   // YYYY-MM-DD (for streak validation)
-  lastCareTime: string | null;   // ISO string (for time decay)
-  adLastWatched: string | null;  // ISO string (for ad cooldown)
+  lastCareDate: string | null;        // YYYY-MM-DD (for streak validation)
+  lastCareTime: string | null;        // kept for migration compat
+  adLastWatched: string | null;       // ISO string (for ad cooldown)
+  lastLoginBonusDate: string | null;  // YYYY-MM-DD (daily login bonus)
   completedMissions: string[];
   todayMissions: string[];
   todayMissionsDate: string;
   isWilting: boolean;
   isDead: boolean;
   totalDaysAlive: number;
+}
+
+export interface MissionResult {
+  state: PlantState;
+  luckyBonus: boolean;
+  xpGained: number;
 }
