@@ -1,0 +1,51 @@
+@import "tailwindcss";
+
+:root {
+  --color-primary: #0066FF;
+  --color-success: #00C473;
+  --color-warning: #FF9500;
+  --color-danger: #FF3B30;
+  --color-bg: #F5F7FA;
+  --color-surface: #FFFFFF;
+  --color-text: #191F28;
+  --color-text-secondary: #6B7684;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --color-bg: #07101f;
+    --color-surface: #1A2332;
+    --color-text: #FFFFFF;
+    --color-text-secondary: #8B95A1;
+  }
+}
+
+body {
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  max-width: 430px;
+  margin: 0 auto;
+}
+
+@keyframes wilt {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(-5deg); }
+  75% { transform: rotate(5deg); }
+}
+
+@keyframes levelup {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.3); }
+  100% { transform: scale(1); }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-8px); }
+}
+
+.plant-float {
+  animation: float 3s ease-in-out infinite;
+}

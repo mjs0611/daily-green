@@ -1,0 +1,13 @@
+{
+  "name": "Plantagotchi",
+  "short_name": "Plantagotchi",
+  "description": "매일 돌봐주는 나의 귀여운 가상 식물",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#F5F7FA",
+  "theme_color": "#00C473",
+  "icons": [
+    { "src": "/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}
