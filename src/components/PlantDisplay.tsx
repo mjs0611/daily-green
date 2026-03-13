@@ -1,4 +1,5 @@
 "use client";
+import Image from "next/image";
 import { PlantStage } from "@/types/plant";
 import { STAGE_INFO } from "@/lib/plantState";
 import { useEffect, useState } from "react";
@@ -27,30 +28,39 @@ export default function PlantDisplay({ stage, isWilting, isDead, xp, xpRequired,
 
   return (
     <div className="flex flex-col items-center gap-4 py-6">
-      {/* Celebration overlay */}
       {celebrating && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
           <div className="text-6xl animate-bounce">🎉</div>
         </div>
       )}
 
-      {/* Plant emoji with animation */}
+      {/* Plant image */}
       <div
-        className={`text-[80px] leading-none select-none transition-all duration-500 ${
-          isDead ? 'grayscale opacity-50 rotate-45' :
-          isWilting ? 'opacity-70' :
-          celebrating ? 'scale-125' : 'plant-float'
+        className={`relative w-44 h-44 select-none transition-all duration-500 ${
+          isDead ? 'grayscale opacity-40 rotate-12' :
+          celebrating ? 'scale-110' : ''
         }`}
         style={{
-          filter: isWilting && !isDead ? 'sepia(0.5)' : undefined,
+          filter: isWilting && !isDead ? 'sepia(0.6) brightness(0.85)' : undefined,
           animation: isWilting && !isDead ? 'wilt 2s ease-in-out infinite' :
-                     celebrating ? 'levelup 0.5s ease-in-out infinite' : undefined,
+                     celebrating ? 'levelup 0.5s ease-in-out infinite' :
+                     !isDead ? 'plantFloat 3s ease-in-out infinite' : undefined,
         }}
       >
-        {isDead ? '🪦' : info.emoji}
+        {isDead ? (
+          <div className="text-[96px] leading-none flex items-center justify-center w-full h-full">🪦</div>
+        ) : (
+          <Image
+            src={info.image}
+            alt={info.name}
+            fill
+            style={{ objectFit: 'contain' }}
+            priority
+          />
+        )}
       </div>
 
-      {/* Stage name */}
+      {/* Stage name & description */}
       <div className="text-center">
         <p className="text-lg font-bold text-gray-800 dark:text-white">{info.name}</p>
         <p className="text-sm text-gray-500 dark:text-gray-400">

@@ -46,6 +46,11 @@ body {
   50% { transform: translateY(-8px); }
 }
 
+@keyframes plantFloat {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-8px); }
+}
+
 .plant-float {
   animation: float 3s ease-in-out infinite;
 }

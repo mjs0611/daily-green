@@ -1,4 +1,4 @@
-export type PlantStage = 'seed' | 'sprout' | 'young' | 'flowering' | 'mature' | 'special';
+export type PlantStage = 'seed' | 'sprout' | 'young' | 'bud' | 'flower' | 'fruit' | 'bloom' | 'special';
 
 export interface PlantStats {
   water: number;    // 0-100
@@ -17,13 +17,15 @@ export interface Mission {
 export interface PlantState {
   stage: PlantStage;
   stats: PlantStats;
-  xp: number;              // current XP toward next stage
-  xpRequired: number;      // XP needed for next stage
-  streak: number;          // consecutive days
-  lastCareTime: string | null;  // ISO string
-  completedMissions: string[];  // mission IDs completed today
-  todayMissions: string[];      // today's 3 mission IDs
-  todayMissionsDate: string;    // YYYY-MM-DD
+  xp: number;
+  xpRequired: number;
+  streak: number;
+  lastCareDate: string | null;   // YYYY-MM-DD (for streak validation)
+  lastCareTime: string | null;   // ISO string (for time decay)
+  adLastWatched: string | null;  // ISO string (for ad cooldown)
+  completedMissions: string[];
+  todayMissions: string[];
+  todayMissionsDate: string;
   isWilting: boolean;
   isDead: boolean;
   totalDaysAlive: number;

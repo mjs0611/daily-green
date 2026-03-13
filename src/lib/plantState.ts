@@ -1,17 +1,31 @@
 import { PlantState, PlantStage, PlantStats } from "@/types/plant";
 import { getTodayMissions } from "./missions";
-import { format } from "date-fns";
+import { format, isYesterday, parseISO } from "date-fns";
 
 const STORAGE_KEY = "daily_green_state";
 
-const STAGE_ORDER: PlantStage[] = ['seed', 'sprout', 'young', 'flowering', 'mature', 'special'];
+const STAGE_ORDER: PlantStage[] = ['seed', 'sprout', 'young', 'bud', 'flower', 'fruit', 'bloom', 'special'];
+
 const XP_REQUIRED: Record<PlantStage, number> = {
-  seed: 50,
-  sprout: 100,
-  young: 150,
-  flowering: 200,
-  mature: 300,
-  special: 9999, // Max stage
+  seed: 30,
+  sprout: 60,
+  young: 100,
+  bud: 150,
+  flower: 200,
+  fruit: 250,
+  bloom: 300,
+  special: 9999,
+};
+
+export const STAGE_INFO: Record<PlantStage, { image: string; name: string; description: string }> = {
+  seed:    { image: '/plants/stage_1_seed.png',    name: '씨앗',      description: '작은 씨앗이 싹을 틔우려 해요' },
+  sprout:  { image: '/plants/stage_2_sprout.png',  name: '새싹',      description: '귀여운 새싹이 올라왔어요!' },
+  young:   { image: '/plants/stage_3_young.png',   name: '어린 식물', description: '쑥쑥 자라고 있어요!' },
+  bud:     { image: '/plants/stage_4_bud.png',     name: '꽃봉오리',  description: '꽃이 피려고 해요!' },
+  flower:  { image: '/plants/stage_5_flower.png',  name: '꽃',        description: '예쁜 꽃이 피었어요!' },
+  fruit:   { image: '/plants/stage_6_fruit.png',   name: '열매',      description: '달콤한 열매가 맺혔어요!' },
+  bloom:   { image: '/plants/stage_7_bloom.png',   name: '만개',      description: '화려하게 만개했어요!' },
+  special: { image: '/plants/stage_8_golden.png',  name: '황금 식물', description: '전설의 황금 식물이 되었어요!' },
 };
 
 export function getInitialState(): PlantState {
@@ -22,7 +36,9 @@ export function getInitialState(): PlantState {
     xp: 0,
     xpRequired: XP_REQUIRED['seed'],
     streak: 0,
+    lastCareDate: null,
     lastCareTime: null,
+    adLastWatched: null,
     completedMissions: [],
     todayMissions: getTodayMissions(today),
     todayMissionsDate: today,
@@ -38,13 +54,29 @@ export function loadState(): PlantState {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return getInitialState();
     const state: PlantState = JSON.parse(raw);
-    // Refresh today's missions if date changed
+
+    // Migrate old state missing new fields
+    if (state.lastCareDate === undefined) state.lastCareDate = null;
+    if (state.adLastWatched === undefined) state.adLastWatched = null;
+
     const today = format(new Date(), 'yyyy-MM-dd');
+
+    // Refresh missions on new day
     if (state.todayMissionsDate !== today) {
       state.todayMissions = getTodayMissions(today);
       state.todayMissionsDate = today;
       state.completedMissions = [];
+      state.totalDaysAlive += 1;
     }
+
+    // Validate streak: if lastCareDate is before yesterday, reset streak
+    if (state.lastCareDate && state.lastCareDate !== today) {
+      const lastDate = parseISO(state.lastCareDate);
+      if (!isYesterday(lastDate)) {
+        state.streak = 0;
+      }
+    }
+
     return applyTimeDecay(state);
   } catch {
     return getInitialState();
@@ -56,15 +88,14 @@ export function saveState(state: PlantState): void {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
 }
 
-// Stats decrease over time if not cared for
 function applyTimeDecay(state: PlantState): PlantState {
   if (!state.lastCareTime || state.isDead) return state;
   const lastCare = new Date(state.lastCareTime);
   const now = new Date();
   const hoursElapsed = (now.getTime() - lastCare.getTime()) / (1000 * 60 * 60);
-  if (hoursElapsed < 6) return state; // Grace period
+  if (hoursElapsed < 6) return state;
 
-  const decayRate = Math.min(hoursElapsed / 24, 3); // Max 3x daily decay
+  const decayRate = Math.min(hoursElapsed / 24, 3);
   const newStats: PlantStats = {
     water: Math.max(0, state.stats.water - decayRate * 15),
     sunlight: Math.max(0, state.stats.sunlight - decayRate * 12),
@@ -77,8 +108,30 @@ function applyTimeDecay(state: PlantState): PlantState {
   return { ...state, stats: newStats, isWilting, isDead };
 }
 
-export function completeMission(state: PlantState, missionId: string, statEffect: Partial<PlantStats>, xpReward: number): PlantState {
+export function completeMission(
+  state: PlantState,
+  missionId: string,
+  statEffect: Partial<PlantStats>,
+  xpReward: number
+): PlantState {
   if (state.completedMissions.includes(missionId) || state.isDead) return state;
+
+  const today = format(new Date(), 'yyyy-MM-dd');
+
+  // Streak logic
+  let newStreak = state.streak;
+  let newLastCareDate = state.lastCareDate;
+
+  if (state.lastCareDate !== today) {
+    // First mission today
+    if (state.lastCareDate) {
+      const lastDate = parseISO(state.lastCareDate);
+      newStreak = isYesterday(lastDate) ? state.streak + 1 : 1;
+    } else {
+      newStreak = 1;
+    }
+    newLastCareDate = today;
+  }
 
   const newStats: PlantStats = {
     water: Math.min(100, state.stats.water + (statEffect.water ?? 0)),
@@ -97,7 +150,7 @@ export function completeMission(state: PlantState, missionId: string, statEffect
     const currentIndex = STAGE_ORDER.indexOf(stage);
     stage = STAGE_ORDER[Math.min(currentIndex + 1, STAGE_ORDER.length - 1)];
     xpRequired = XP_REQUIRED[stage];
-    finalXp = newXp - state.xpRequired; // carry over
+    finalXp = newXp - state.xpRequired;
   }
 
   return {
@@ -108,6 +161,8 @@ export function completeMission(state: PlantState, missionId: string, statEffect
     stage,
     completedMissions,
     lastCareTime: new Date().toISOString(),
+    lastCareDate: newLastCareDate,
+    streak: newStreak,
     isWilting,
     isDead: false,
   };
@@ -125,6 +180,7 @@ export function applyAdBoost(state: PlantState): PlantState {
     xp: Math.min(state.xpRequired - 1, state.xp + 30),
     isWilting: false,
     lastCareTime: new Date().toISOString(),
+    adLastWatched: new Date().toISOString(),
   };
 }
 
@@ -132,11 +188,9 @@ export function resetPlant(): PlantState {
   return getInitialState();
 }
 
-export const STAGE_INFO: Record<PlantStage, { emoji: string; name: string; description: string }> = {
-  seed: { emoji: '🌰', name: '씨앗', description: '작은 씨앗이 싹을 틔우려 해요' },
-  sprout: { emoji: '🌱', name: '새싹', description: '귀여운 새싹이 올라왔어요!' },
-  young: { emoji: '🌿', name: '어린 식물', description: '쑥쑥 자라고 있어요!' },
-  flowering: { emoji: '🌸', name: '꽃봉오리', description: '꽃이 피려고 해요!' },
-  mature: { emoji: '🌺', name: '만개', description: '아름답게 꽃이 피었어요!' },
-  special: { emoji: '✨🌟', name: '황금 식물', description: '전설의 황금 식물이 되었어요!' },
-};
+export function isAdAvailable(state: PlantState): boolean {
+  if (!state.adLastWatched) return true;
+  const lastWatched = new Date(state.adLastWatched);
+  const hoursElapsed = (Date.now() - lastWatched.getTime()) / (1000 * 60 * 60);
+  return hoursElapsed >= 1;
+}
