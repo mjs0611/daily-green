@@ -14,14 +14,14 @@ const XP_REQUIRED: Record<PlantStage, number> = {
 };
 
 export const STAGE_INFO: Record<PlantStage, { image: string; name: string; description: string }> = {
-  seed:    { image: '/plants/stage_1_seed.png',    name: '씨앗',      description: '작은 씨앗이 싹을 틔우려 해요' },
-  sprout:  { image: '/plants/stage_2_sprout.png',  name: '새싹',      description: '귀여운 새싹이 올라왔어요!' },
-  young:   { image: '/plants/stage_3_young.png',   name: '어린 식물', description: '쑥쑥 자라고 있어요!' },
-  bud:     { image: '/plants/stage_4_bud.png',     name: '꽃봉오리',  description: '꽃이 피려고 해요!' },
-  flower:  { image: '/plants/stage_5_flower.png',  name: '꽃',        description: '예쁜 꽃이 피었어요!' },
-  fruit:   { image: '/plants/stage_6_fruit.png',   name: '열매',      description: '달콤한 열매가 맺혔어요!' },
-  bloom:   { image: '/plants/stage_7_bloom.png',   name: '만개',      description: '화려하게 만개했어요!' },
-  special: { image: '/plants/stage_8_golden.png',  name: '황금 식물', description: '전설의 황금 식물이 되었어요!' },
+  seed: { image: '/plants/stage_1_seed_cute.png', name: '씨앗', description: '작은 씨앗이 싹을 틔우려 해요' },
+  sprout: { image: '/plants/stage_2_sprout_cute.png', name: '새싹', description: '귀여운 새싹이 올라왔어요!' },
+  young: { image: '/plants/stage_3_young_cute.png', name: '어린 식물', description: '쑥쑥 자라고 있어요!' },
+  bud: { image: '/plants/stage_4_bud_cute.png', name: '꽃봉오리', description: '꽃이 피려고 해요!' },
+  flower: { image: '/plants/stage_5_flower_cute.png', name: '꽃', description: '예쁜 꽃이 피었어요!' },
+  fruit: { image: '/plants/stage_6_fruit_cute.png', name: '열매', description: '달콤한 열매가 맺혔어요!' },
+  bloom: { image: '/plants/stage_7_bloom.png', name: '만개', description: '화려하게 만개했어요!' },
+  special: { image: '/plants/stage_8_golden.png', name: '황금 식물', description: '전설의 황금 식물이 되었어요!' },
 };
 
 const MAX_SHIELDS = 2;
@@ -87,16 +87,16 @@ export function loadState(): PlantState {
     let state: any = JSON.parse(raw);
 
     // Migrate missing fields
-    if (!state.lastCareDate)         state.lastCareDate = null;
-    if (!state.adLastWatched)        state.adLastWatched = null;
-    if (!state.lastLoginBonusDate)   state.lastLoginBonusDate = null;
-    if (!state.lastWateringTime)     state.lastWateringTime = null;
+    if (!state.lastCareDate) state.lastCareDate = null;
+    if (!state.adLastWatched) state.adLastWatched = null;
+    if (!state.lastLoginBonusDate) state.lastLoginBonusDate = null;
+    if (!state.lastWateringTime) state.lastWateringTime = null;
     if (!state.lastMoodInteractTime) state.lastMoodInteractTime = null;
-    if (!state.plantType)            state.plantType = 'green';
-    if (!state.garden)               state.garden = [];
+    if (!state.plantType) state.plantType = 'green';
+    if (!state.garden) state.garden = [];
     if (state.streakShields === undefined) state.streakShields = 0;
     if (!state.lastShieldRefillWeek) state.lastShieldRefillWeek = null;
-    if (!state.maxStreak)            state.maxStreak = state.streak ?? 0;
+    if (!state.maxStreak) state.maxStreak = state.streak ?? 0;
 
     const today = format(new Date(), 'yyyy-MM-dd');
 
@@ -186,9 +186,9 @@ export function completeMission(
   const newMaxStreak = Math.max(state.maxStreak ?? 0, newStreak);
 
   const newStats: PlantStats = {
-    water:    Math.min(100, state.stats.water    + (statEffect.water    ?? 0)),
+    water: Math.min(100, state.stats.water + (statEffect.water ?? 0)),
     sunlight: Math.min(100, state.stats.sunlight + (statEffect.sunlight ?? 0)),
-    health:   Math.min(100, state.stats.health   + (statEffect.health   ?? 0)),
+    health: Math.min(100, state.stats.health + (statEffect.health ?? 0)),
   };
 
   // Weather bonus
@@ -262,8 +262,8 @@ export function applyMoodInteract(state: PlantState): { state: PlantState; xpGai
 
 function loginBonusXp(streak: number): number {
   if (streak >= 30) return 30;
-  if (streak >= 7)  return 20;
-  if (streak >= 3)  return 15;
+  if (streak >= 7) return 20;
+  if (streak >= 3) return 15;
   return 10;
 }
 
