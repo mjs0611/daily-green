@@ -67,7 +67,7 @@ export default function HomePage() {
       setPlant(state);
     }
     logEvent("screen_view", { screen: "home", stage: state.stage, streak: state.streak });
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const handleOnboardingStart = () => {
@@ -175,7 +175,7 @@ export default function HomePage() {
 
   // ── Render guards ───────────────────────────────────────────
   if (showSplash) return <Splash onDone={() => setShowSplash(false)} />;
-  if (!onboarded)  return <Onboarding onStart={handleOnboardingStart} />;
+  if (!onboarded) return <Onboarding onStart={handleOnboardingStart} />;
   if (!plant) {
     return (
       <div className="flex items-center justify-center min-h-screen">
@@ -191,10 +191,10 @@ export default function HomePage() {
 
   const streakBadge =
     plant.streak >= 30 ? "🏆 월간 마스터" :
-    plant.streak >= 7  ? "⭐ 주간 달성"    : null;
+      plant.streak >= 7 ? "⭐ 주간 달성" : null;
 
   return (
-    <div className="min-h-screen bg-[var(--color-bg)] pb-8">
+    <div className="min-h-screen nature-page pb-12">
       {/* Header */}
       <Top
         title={
@@ -246,7 +246,7 @@ export default function HomePage() {
       <WeatherBanner />
 
       {/* Plant */}
-      <div className="mx-4 mt-3 bg-gradient-to-b from-green-50 to-blue-50 dark:from-gray-800 dark:to-gray-900 rounded-3xl relative overflow-hidden">
+      <div className="mx-4 mt-3 bg-gradient-to-b from-emerald-50/60 to-emerald-100/30 dark:from-emerald-900/40 dark:to-emerald-950/20 backdrop-blur-3xl rounded-3xl relative overflow-hidden shadow-sm border border-emerald-100 dark:border-emerald-800/30">
         <PlantDisplay
           stage={plant.stage}
           plantType={plant.plantType}
@@ -276,11 +276,16 @@ export default function HomePage() {
 
       {/* Stats */}
       {!plant.isDead && (
-        <div className="mx-4 mt-3 bg-white dark:bg-gray-800 rounded-3xl p-4 space-y-3 shadow-sm">
-          <h2 className="text-sm font-bold text-gray-700 dark:text-gray-200">식물 상태</h2>
-          <StatBar emoji="💧" label="수분" value={plant.stats.water} color="#3B82F6" />
-          <StatBar emoji="☀️" label="햇빛" value={plant.stats.sunlight} color="#F59E0B" />
-          <StatBar emoji="💚" label="건강" value={plant.stats.health} color="#00C473" />
+        <div className="mx-4 mt-3 glass-panel rounded-3xl p-5 space-y-4 shadow-sm relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-emerald-200/20 dark:bg-emerald-500/10 rounded-full blur-3xl -z-10 -translate-y-1/2 translate-x-1/2"></div>
+          <h2 className="text-sm font-bold tracking-wide text-gray-800 dark:text-gray-100 flex items-center gap-1.5">
+            <span>✨</span> 식물 상태
+          </h2>
+          <div className="space-y-4 pt-1">
+            <StatBar emoji="💧" label="수분" value={plant.stats.water} color="#3B82F6" />
+            <StatBar emoji="☀️" label="햇빛" value={plant.stats.sunlight} color="#F59E0B" />
+            <StatBar emoji="💚" label="건강" value={plant.stats.health} color="#10B981" />
+          </div>
         </div>
       )}
 
@@ -315,7 +320,7 @@ export default function HomePage() {
       <Toast position="bottom" open={toast.open} text={toast.message} />
 
       <GrowthEventPopup event={growthEvent} onDismiss={() => setGrowthEvent(null)} />
-      {showShare  && <ShareSheet plant={plant} onClose={() => setShowShare(false)} />}
+      {showShare && <ShareSheet plant={plant} onClose={() => setShowShare(false)} />}
       {showGarden && <GardenSheet garden={plant.garden} currentType={plant.plantType} onClose={() => setShowGarden(false)} />}
     </div>
   );

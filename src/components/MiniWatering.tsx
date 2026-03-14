@@ -33,12 +33,16 @@ export default function MiniWatering({ plant, onWater }: Props) {
   }, [plant.lastWateringTime, available]);
 
   return (
-    <div className="flex items-center justify-between bg-white dark:bg-gray-800 rounded-2xl px-4 py-3 shadow-sm">
-      <div className="flex items-center gap-2">
-        <span className="text-lg">💧</span>
+    <div className="flex items-center justify-between glass-panel rounded-3xl px-5 py-4 shadow-sm transition-all duration-300 hover:shadow-md">
+      <div className="flex items-center gap-3">
+        <div className="w-10 h-10 bg-white/50 dark:bg-black/20 rounded-xl flex justify-center items-center shadow-inner">
+          <span className="text-xl">💧</span>
+        </div>
         <div>
-          <p className="text-xs font-semibold text-gray-700 dark:text-gray-200">미니 워터링</p>
-          <p className="text-[10px] text-gray-400 dark:text-gray-500">
+          <p className="text-sm font-bold tracking-wide text-gray-800 dark:text-gray-100 flex items-center gap-1.5">
+            미니 워터링
+          </p>
+          <p className="text-[11px] font-medium text-emerald-600/80 dark:text-emerald-400/80 mt-0.5">
             {available ? "물 주고 +5 XP 받기" : `${cooldown} 다시 열려요`}
           </p>
         </div>
@@ -46,13 +50,12 @@ export default function MiniWatering({ plant, onWater }: Props) {
       <button
         onClick={onWater}
         disabled={!available}
-        className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all ${
-          available
-            ? "bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 active:scale-95"
-            : "bg-gray-100 dark:bg-gray-700 text-gray-400 dark:text-gray-500 cursor-not-allowed"
-        }`}
+        className={`px-4 py-2 rounded-full text-xs font-bold transition-all duration-300 transform active:scale-95 shadow-sm ${available
+            ? "bg-gradient-to-r from-blue-400 to-blue-500 text-white shadow-[0_4px_12px_rgba(59,130,246,0.3)] hover:shadow-[0_6px_16px_rgba(59,130,246,0.5)] hover:-translate-y-0.5"
+            : "bg-gray-100/50 dark:bg-gray-800/50 text-gray-400 dark:text-gray-500 cursor-not-allowed border border-gray-200 dark:border-gray-700"
+          }`}
       >
-        {available ? "💧 주기" : "⏳"}
+        {available ? "💧 물주기" : "⏳ 대기중"}
       </button>
     </div>
   );

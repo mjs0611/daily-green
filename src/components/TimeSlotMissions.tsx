@@ -22,10 +22,12 @@ export default function TimeSlotMissions({
   total,
 }: Props) {
   return (
-    <div className="mx-4 mt-3 bg-white dark:bg-gray-800 rounded-3xl p-4 shadow-sm">
-      <div className="flex items-center justify-between mb-3">
-        <h2 className="text-sm font-bold text-gray-700 dark:text-gray-200">오늘의 미션</h2>
-        <span className="text-xs text-gray-400 dark:text-gray-500">{totalCompleted}/{total} 완료</span>
+    <div className="mx-4 mt-3 glass-panel rounded-3xl p-5 shadow-sm">
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-sm font-bold tracking-wide text-gray-800 dark:text-gray-100 flex items-center gap-1.5">
+          <span>🌿</span> 오늘의 미션
+        </h2>
+        <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/30 px-2 py-0.5 rounded-full">{totalCompleted}/{total} 완료</span>
       </div>
 
       <div className="space-y-4">

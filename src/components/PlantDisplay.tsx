@@ -32,10 +32,10 @@ export default function PlantDisplay({ stage, plantType, isWilting, isDead, xp, 
   }, [justLeveledUp]);
 
   return (
-    <div className="flex flex-col items-center gap-4 py-6">
+    <div className="flex flex-col items-center gap-4 py-8">
       {celebrating && (
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none z-10">
-          <div className="text-6xl animate-bounce">🎉</div>
+          <div className="text-7xl animate-bounce drop-shadow-[0_0_15px_rgba(255,255,255,0.8)]">🎉</div>
         </div>
       )}
 
@@ -49,17 +49,15 @@ export default function PlantDisplay({ stage, plantType, isWilting, isDead, xp, 
 
       {/* Plant image */}
       <div
-        className={`relative w-44 h-44 select-none transition-all duration-500 ${
-          isDead ? 'grayscale opacity-40 rotate-12' :
-          celebrating ? 'scale-110' : ''
-        }`}
+        className={`relative w-48 h-48 select-none transition-all duration-500 ${isDead ? 'grayscale opacity-40 rotate-[15deg]' :
+            !isWilting && !celebrating ? 'animate-breathe' : ''
+          }`}
         style={{
           filter: isDead ? undefined :
-                  isWilting ? `sepia(0.6) brightness(0.85) hue-rotate(${typeInfo.hueRotate}deg)` :
-                  typeInfo.hueRotate ? `hue-rotate(${typeInfo.hueRotate}deg)` : undefined,
-          animation: isWilting && !isDead ? 'wilt 2s ease-in-out infinite' :
-                     celebrating ? 'levelup 0.5s ease-in-out infinite' :
-                     !isDead ? 'plantFloat 3s ease-in-out infinite' : undefined,
+            isWilting ? `sepia(0.6) brightness(0.85) hue-rotate(${typeInfo.hueRotate}deg)` :
+              typeInfo.hueRotate ? `hue-rotate(${typeInfo.hueRotate}deg)` : undefined,
+          animation: isWilting && !isDead ? 'wilt 3s ease-in-out infinite' :
+            celebrating ? 'levelup-burst 0.6s cubic-bezier(0.34, 1.56, 0.64, 1)' : undefined,
         }}
       >
         {isDead ? (
@@ -85,12 +83,19 @@ export default function PlantDisplay({ stage, plantType, isWilting, isDead, xp, 
 
       {/* XP Progress */}
       {!isDead && stage !== 'special' && (
-        <div className="w-full px-4">
-          <div className="flex justify-between text-xs text-gray-500 dark:text-gray-400 mb-1.5">
-            <span>성장 진행도</span>
+        <div className="w-full px-6">
+          <div className="flex justify-between text-xs font-medium text-emerald-700 dark:text-emerald-300 mb-2">
+            <span>성장도</span>
             <span>{xp} / {xpRequired} XP</span>
           </div>
-          <ProgressBar progress={progress} size="normal" color="#00C473" animate />
+          <div className="bg-emerald-100 dark:bg-emerald-900/40 rounded-full h-3.5 overflow-hidden shadow-inner border border-emerald-200/50 dark:border-emerald-700/30">
+            <div
+              className="h-full bg-gradient-to-r from-emerald-400 to-emerald-500 dark:from-emerald-500 dark:to-emerald-400 rounded-full transition-all duration-700 ease-out relative"
+              style={{ width: `${progress * 100}%` }}
+            >
+              <div className="absolute inset-0 bg-white/20 w-full animate-pulse"></div>
+            </div>
+          </div>
         </div>
       )}
 

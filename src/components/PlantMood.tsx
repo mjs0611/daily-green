@@ -32,29 +32,35 @@ export default function PlantMood({ plant, completedToday, onInteract }: Props) 
   return (
     <button
       onClick={handleTap}
-      className="w-full flex flex-col items-center gap-1 focus:outline-none"
+      className="w-full flex flex-col items-center gap-1 focus:outline-none group"
       aria-label="식물 감정 확인"
     >
       {/* Speech bubble */}
       <div
         style={{
-          transition: "opacity 300ms ease, transform 300ms ease",
+          transition: "opacity 300ms ease, transform 300ms cubic-bezier(0.34, 1.56, 0.64, 1)",
           opacity: visible ? 1 : 0,
-          transform: visible ? "translateY(0)" : "translateY(6px)",
+          transform: visible ? "translateY(0) scale(1)" : "translateY(10px) scale(0.9)",
           pointerEvents: "none",
         }}
-        className="bg-white dark:bg-gray-700 border border-gray-100 dark:border-gray-600 rounded-2xl px-3 py-1.5 shadow-sm flex items-center gap-1.5 max-w-[200px]"
+        className="bg-white/80 dark:bg-black/40 backdrop-blur-md border border-white/40 dark:border-white/10 rounded-2xl px-4 py-2 shadow-[0_8px_30px_rgb(0,0,0,0.08)] dark:shadow-[0_8px_30px_rgb(0,0,0,0.3)] flex items-center gap-2 max-w-[220px]"
       >
-        <span className="text-base">{mood.emoji}</span>
-        <span className="text-[11px] text-gray-600 dark:text-gray-300 font-medium leading-tight">{mood.message}</span>
+        <span className={`text-lg ${visible ? 'animate-bounce' : ''}`}>{mood.emoji}</span>
+        <span className="text-[12px] text-gray-700 dark:text-gray-200 font-medium leading-tight tracking-wide">{mood.message}</span>
       </div>
       {/* Triangle pointer */}
       <div
-        style={{ opacity: visible ? 1 : 0, transition: "opacity 300ms ease" }}
-        className="w-2 h-2 bg-white dark:bg-gray-700 border-r border-b border-gray-100 dark:border-gray-600 rotate-45 -mt-1.5"
+        style={{
+          opacity: visible ? 1 : 0,
+          transition: "opacity 300ms ease, transform 300ms cubic-bezier(0.34, 1.56, 0.64, 1)",
+          transform: visible ? "translateY(0)" : "translateY(10px)"
+        }}
+        className="w-3 h-3 bg-white/80 dark:bg-black/40 backdrop-blur-md border-r border-b border-white/40 dark:border-white/10 rotate-45 -mt-2 z-[-1]"
       />
       {canInteract && !visible && (
-        <span className="text-[10px] text-gray-400 dark:text-gray-500 mt-0.5">탭해서 말 걸기</span>
+        <span className="text-[10px] text-emerald-600/60 dark:text-emerald-400/60 font-medium mt-1 group-hover:text-emerald-600 dark:group-hover:text-emerald-400 transition-colors">
+          ✨ 탭해서 교감하기
+        </span>
       )}
     </button>
   );
