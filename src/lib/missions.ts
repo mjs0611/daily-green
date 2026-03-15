@@ -15,7 +15,7 @@ export const ALL_MISSIONS: Mission[] = [
   { id: 'hug',       emoji: '🤗', label: '안아주기',         statEffect: { health: 20 },               xpReward: 15 },
 ];
 
-// Pick 9 unique missions for today (3 per slot), seeded by date
+// Pick 12 unique missions for today (3 per slot), seeded by date
 export function getTodayMissions(dateStr: string): TimeSlotMissions {
   let hash = 0;
   for (let i = 0; i < dateStr.length; i++) {
@@ -27,11 +27,12 @@ export function getTodayMissions(dateStr: string): TimeSlotMissions {
     const hb = Math.sin(hash + b.id.charCodeAt(0)) * 10000;
     return (ha - Math.floor(ha)) - (hb - Math.floor(hb));
   });
-  const picked = shuffled.slice(0, 9).map(m => m.id);
+  const picked = shuffled.slice(0, 12).map(m => m.id);
   return {
     morning:   picked.slice(0, 3),
     afternoon: picked.slice(3, 6),
     evening:   picked.slice(6, 9),
+    night:     picked.slice(9, 12),
   };
 }
 

@@ -1,5 +1,5 @@
 export type PlantStage = 'seed' | 'sprout' | 'young' | 'bud' | 'flower' | 'fruit' | 'bloom' | 'special';
-export type TimeSlot = 'morning' | 'afternoon' | 'evening';
+export type TimeSlot = 'morning' | 'afternoon' | 'evening' | 'night';
 export type Weather = 'sunny' | 'cloudy' | 'rainy' | 'windy' | 'moonlight';
 export type Season = 'spring' | 'summer' | 'autumn' | 'winter';
 export type PlantType = 'green' | 'cactus' | 'cherry' | 'sunflower' | 'bamboo' | 'rose';
@@ -22,6 +22,7 @@ export interface TimeSlotMissions {
   morning: string[];
   afternoon: string[];
   evening: string[];
+  night: string[];
 }
 
 export interface CollectedPlant {

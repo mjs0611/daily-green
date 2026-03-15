@@ -4,13 +4,13 @@ import TDSProvider from "@/components/TDSProvider";
 import { ThemeProvider } from "@/lib/theme";
 
 export const metadata: Metadata = {
-  title: "초록하루 🌱",
+  title: "플랜티 🌱",
   description: "매일 돌봐주는 나의 귀여운 가상 식물",
   manifest: "/manifest.json",
   appleWebApp: {
     capable: true,
     statusBarStyle: "default",
-    title: "초록하루",
+    title: "플랜티",
   },
 };
 

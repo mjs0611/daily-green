@@ -36,7 +36,7 @@ export default function Splash({ onDone }: Props) {
       >
         <span className="text-7xl">🌿</span>
         <div className="text-center">
-          <p className="text-3xl font-bold text-white tracking-tight">초록하루</p>
+          <p className="text-3xl font-bold text-white tracking-tight">플랜티</p>
           <p className="text-sm text-white/70 mt-1">매일 돌봐주는 나의 가상 식물</p>
         </div>
       </div>

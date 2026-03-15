@@ -27,7 +27,7 @@ export async function nativeShare(message: string): Promise<void> {
     // 앱 외부: Web Share API 또는 클립보드
     const nav = navigator as Navigator & { share?: (data: ShareData) => Promise<void> };
     if (nav.share) {
-      await nav.share({ title: "초록하루 🌿", text: message });
+      await nav.share({ title: "플랜티 🌿", text: message });
     } else {
       await navigator.clipboard.writeText(message);
     }

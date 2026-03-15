@@ -4,7 +4,7 @@ import { getCurrentWeather, getCurrentTimeSlot, weatherBonusMultiplier } from ".
 import { getCurrentSeason, seasonXpMultiplier, GROWTH_EVENTS, PLANT_TYPE_ORDER, getCurrentWeekStr } from "./season";
 import { format, isYesterday, parseISO, differenceInCalendarDays } from "date-fns";
 
-const STORAGE_KEY = "daily_green_state";
+const STORAGE_KEY = "planty_state";
 
 const STAGE_ORDER: PlantStage[] = ['seed', 'sprout', 'young', 'bud', 'flower', 'fruit', 'bloom', 'special'];
 
@@ -105,6 +105,10 @@ export function loadState(): PlantState {
       state.timeSlotMissions = getTodayMissions(state.todayMissionsDate ?? today);
       state.completedMissions = [];
     }
+    // Migrate missing night slot
+    if (!state.timeSlotMissions.night) {
+      state.timeSlotMissions = getTodayMissions(state.todayMissionsDate ?? today);
+    }
 
     // Refresh missions on new day
     if (state.todayMissionsDate !== today) {
@@ -194,7 +198,7 @@ export function completeMission(
   // Weather bonus
   const weather = getCurrentWeather();
   const { slot } = parseSlotId(slotId);
-  const wMult = weatherBonusMultiplier(weather, slot as 'morning' | 'afternoon' | 'evening', statEffect);
+  const wMult = weatherBonusMultiplier(weather, slot as 'morning' | 'afternoon' | 'evening' | 'night', statEffect);
   const weatherBonus = wMult > 1;
 
   // Season bonus
@@ -311,10 +315,11 @@ export function isAdAvailable(state: PlantState): boolean {
   return Date.now() - new Date(state.adLastWatched).getTime() >= 60 * 60 * 1000;
 }
 
-export function getAllMissionIds(tsm: { morning: string[]; afternoon: string[]; evening: string[] }): string[] {
+export function getAllMissionIds(tsm: { morning: string[]; afternoon: string[]; evening: string[]; night: string[] }): string[] {
   return [
     ...tsm.morning.map(id => `morning_${id}`),
     ...tsm.afternoon.map(id => `afternoon_${id}`),
     ...tsm.evening.map(id => `evening_${id}`),
+    ...(tsm.night ?? []).map(id => `night_${id}`),
   ];
 }

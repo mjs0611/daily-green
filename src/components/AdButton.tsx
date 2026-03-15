@@ -112,7 +112,7 @@ export default function AdButton({ onAdComplete, adAvailable }: Props) {
       <div className="relative h-16 bg-gradient-to-r from-slate-100 to-slate-200 dark:from-gray-700 dark:to-gray-600 flex items-center gap-3 px-4">
         <span className="text-2xl">🌿</span>
         <div>
-          <p className="text-xs font-bold text-gray-700 dark:text-gray-200">초록하루 프리미엄</p>
+          <p className="text-xs font-bold text-gray-700 dark:text-gray-200">플랜티 프리미엄</p>
           <p className="text-[10px] text-gray-400 dark:text-gray-500">광고 없이 즐기고 싶다면?</p>
         </div>
         <span className="ml-auto text-[9px] text-gray-300 dark:text-gray-600 border border-gray-200 dark:border-gray-600 rounded px-1">광고</span>

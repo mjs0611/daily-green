@@ -22,16 +22,16 @@ import PlantMood from "@/components/PlantMood";
 import MiniWatering from "@/components/MiniWatering";
 import TimeSlotMissions from "@/components/TimeSlotMissions";
 import GrowthEventPopup from "@/components/GrowthEventPopup";
-import GardenSheet from "@/components/GardenSheet";
+import GardenView from "@/components/GardenView";
 import { useTheme } from "@/lib/theme";
 
-const ONBOARDED_KEY = "daily_green_onboarded";
+const ONBOARDED_KEY = "planty_onboarded";
 
 export default function HomePage() {
   const [plant, setPlant] = useState<PlantState | null>(null);
   const [justLeveledUp, setJustLeveledUp] = useState(false);
   const [showShare, setShowShare] = useState(false);
-  const [showGarden, setShowGarden] = useState(false);
+  const [activeTab, setActiveTab] = useState<'home' | 'garden'>('home');
   const [toast, setToast] = useState<{ open: boolean; message: string }>({ open: false, message: "" });
   const [growthEvent, setGrowthEvent] = useState<GrowthEvent | null>(null);
   const toastTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -84,7 +84,7 @@ export default function HomePage() {
         const { graniteEvent } = await import("@apps-in-toss/web-framework");
         const sub = graniteEvent.addEventListener("backEvent", {
           onEvent: () => {
-            if (showGarden) { setShowGarden(false); return; }
+            if (activeTab === 'garden') { setActiveTab('home'); return; }
             setShowShare(prev => (prev ? false : prev));
           },
         });
@@ -92,7 +92,7 @@ export default function HomePage() {
       } catch { /* 앱 외부 */ }
     })();
     return () => cleanup?.();
-  }, [showGarden]);
+  }, [activeTab]);
 
   const handleMissionComplete = useCallback((slotId: string) => {
     if (!plant) return;
@@ -194,39 +194,41 @@ export default function HomePage() {
       plant.streak >= 7 ? "⭐ 주간 달성" : null;
 
   return (
-    <div className="min-h-screen nature-page pb-12">
+    <div className="min-h-screen nature-page pb-28">
       {/* Header */}
-      <Top
-        title={
-          <div className="flex items-center gap-1.5">
-            <span className="text-xl font-bold">초록하루</span>
+      <div className="flex items-center justify-between px-4 pt-4 pb-2">
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-1">
+            <span className="text-2xl font-bold whitespace-nowrap">플랜티</span>
             <span>🌿</span>
           </div>
-        }
-        subtitleBottom={
-          <div className="flex items-center gap-1.5">
-            <span className="text-orange-500 font-semibold text-xs">🔥 {plant.streak}일</span>
-            <span className="text-[var(--color-text-secondary)] text-xs">연속 케어</span>
+          <div className="flex items-center gap-1 mt-0.5 flex-wrap">
+            <span className="text-orange-500 font-semibold text-xs whitespace-nowrap">🔥 {plant.streak}일 연속</span>
             {plant.streakShields > 0 && (
-              <span className="text-[10px] bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 px-1.5 py-0.5 rounded-full">
-                🛡 ×{plant.streakShields}
+              <span className="text-[10px] bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 px-1.5 py-0.5 rounded-full whitespace-nowrap">
+                🛡×{plant.streakShields}
               </span>
             )}
             {streakBadge && (
-              <span className="text-[10px] bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 px-1.5 py-0.5 rounded-full font-medium">
+              <span className="text-[10px] bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 px-1.5 py-0.5 rounded-full font-medium whitespace-nowrap">
                 {streakBadge}
               </span>
             )}
           </div>
-        }
-        right={
-          <div className="flex items-center gap-1">
-            <Top.RightButton onClick={() => setShowGarden(true)} aria-label="내 정원">🌸</Top.RightButton>
-            <Top.RightButton onClick={() => { setShowShare(true); logEvent("share_open", { stage: plant.stage }); }} aria-label="공유">🔗</Top.RightButton>
-            <Top.RightButton onClick={toggle} aria-label="테마">{theme === "dark" ? "☀️" : "🌙"}</Top.RightButton>
-          </div>
-        }
-      />
+        </div>
+        <div className="flex items-center gap-1 flex-shrink-0 ml-2">
+          <button onClick={() => { setShowShare(true); logEvent("share_open", { stage: plant.stage }); }} className="text-xs font-medium px-2.5 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 transition-colors whitespace-nowrap">공유</button>
+          <button onClick={toggle} className="text-xs font-medium px-2.5 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 transition-colors whitespace-nowrap">{theme === "dark" ? "라이트" : "다크"}</button>
+        </div>
+      </div>
+
+      {/* Garden Tab */}
+      {activeTab === 'garden' && (
+        <GardenView garden={plant.garden} currentType={plant.plantType} />
+      )}
+
+      {/* Home Tab */}
+      {activeTab === 'home' && <>
 
       {/* Stage badge + Season */}
       <div className="px-4 mt-1 flex items-center gap-2">
@@ -317,11 +319,50 @@ export default function HomePage() {
         </div>
       )}
 
-      <Toast position="bottom" open={toast.open} text={toast.message} />
+      {/* End Home Tab */}
+      </>}
 
+      <Toast position="bottom" open={toast.open} text={toast.message} />
       <GrowthEventPopup event={growthEvent} onDismiss={() => setGrowthEvent(null)} />
       {showShare && <ShareSheet plant={plant} onClose={() => setShowShare(false)} />}
-      {showGarden && <GardenSheet garden={plant.garden} currentType={plant.plantType} onClose={() => setShowGarden(false)} />}
+
+      {/* Bottom Tab Nav */}
+      <nav className="fixed bottom-5 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-sm bg-white/80 dark:bg-[#09100D]/90 backdrop-blur-xl border border-white/30 dark:border-emerald-500/20 rounded-full shadow-[0_8px_32px_rgba(0,0,0,0.12)] z-40 px-2 py-1.5 capsule-nav">
+        <div className="flex justify-around items-center h-12">
+          {([
+            { id: 'home', label: '홈', icon: (
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M3 9.75L12 3l9 6.75V21H15v-5.25H9V21H3V9.75z" />
+              </svg>
+            )},
+            { id: 'garden', label: '정원', icon: (
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 3C7 3 3 7.5 3 12c4 0 7-2 9-5 2 3 5 5 9 5 0-4.5-4-9-9-9z" />
+                <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v13M9 21h6" />
+              </svg>
+            )},
+          ] as const).map(({ id, label, icon }) => {
+            const active = activeTab === id;
+            return (
+              <button
+                key={id}
+                onClick={() => setActiveTab(id)}
+                className={`relative flex-1 flex flex-col items-center justify-center h-full text-[11px] font-bold tracking-wide transition-all duration-300 rounded-full gap-0.5 ${
+                  active
+                    ? 'text-emerald-600 dark:text-emerald-400 bg-emerald-50/60 dark:bg-emerald-900/40'
+                    : 'text-gray-400 dark:text-gray-500 hover:text-emerald-500 dark:hover:text-emerald-600'
+                }`}
+              >
+                {active && (
+                  <span className="absolute -top-1 w-8 h-1 bg-emerald-500 dark:bg-emerald-400 rounded-b-full shadow-[0_0_8px_rgba(16,185,129,0.7)]" />
+                )}
+                {icon}
+                {label}
+              </button>
+            );
+          })}
+        </div>
+      </nav>
     </div>
   );
 }

@@ -1,9 +1,9 @@
 import { defineConfig } from "@apps-in-toss/web-framework/config";
 
 export default defineConfig({
-  appName: "daily-green",
+  appName: "planty",
   brand: {
-    displayName: "초록하루",
+    displayName: "플랜티",
     primaryColor: "#00C473",
     icon: "/icon-512.png",
   },

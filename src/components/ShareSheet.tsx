@@ -15,7 +15,7 @@ export default function ShareSheet({ plant, onClose }: Props) {
   const [shared, setShared] = useState(false);
   const info = STAGE_INFO[plant.stage];
 
-  const shareText = `🌿 초록하루\n나의 식물이 "${info.name}" 단계에 도달했어요!\n🔥 ${plant.streak}일 연속 케어 중\n💧 ${plant.stats.water}  ☀️ ${plant.stats.sunlight}  💚 ${plant.stats.health}\n\n나도 식물 키워보기 → https://daily-green.vercel.app`;
+  const shareText = `🌿 플랜티\n나의 식물이 "${info.name}" 단계에 도달했어요!\n🔥 ${plant.streak}일 연속 케어 중\n💧 ${plant.stats.water}  ☀️ ${plant.stats.sunlight}  💚 ${plant.stats.health}\n\n나도 식물 키워보기 → https://planty.vercel.app`;
 
   const handleShare = async () => {
     await nativeShare(shareText);

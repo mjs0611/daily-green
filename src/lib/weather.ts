@@ -1,6 +1,6 @@
 import type { Weather, TimeSlot } from '@/types/plant';
 
-const SLOT_ORDER: TimeSlot[] = ['morning', 'afternoon', 'evening'];
+const SLOT_ORDER: TimeSlot[] = ['morning', 'afternoon', 'evening', 'night'];
 
 export const WEATHER_INFO: Record<Weather, {
   emoji: string;
@@ -27,21 +27,26 @@ export function getCurrentWeather(): Weather {
 
 export function getCurrentTimeSlot(): TimeSlot {
   const hour = new Date().getHours();
-  if (hour < 12) return 'morning';
-  if (hour < 18) return 'afternoon';
-  return 'evening';
+  if (hour >= 7 && hour < 12) return 'morning';    // 07:00 ~ 11:59
+  if (hour >= 12 && hour < 18) return 'afternoon'; // 12:00 ~ 17:59
+  if (hour >= 18 && hour < 23) return 'evening';   // 18:00 ~ 22:59
+  return 'night';                                   // 23:00 ~ 06:59
 }
 
 export function isSlotUnlocked(slot: TimeSlot): boolean {
-  const current = SLOT_ORDER.indexOf(getCurrentTimeSlot());
-  return SLOT_ORDER.indexOf(slot) <= current;
+  const current = getCurrentTimeSlot();
+  // night wraps around midnight, treat it as always unlocked when active
+  // ordering: morning < afternoon < evening < night
+  const order: Record<TimeSlot, number> = { morning: 0, afternoon: 1, evening: 2, night: 3 };
+  return order[slot] <= order[current];
 }
 
 export function getSlotMeta(slot: TimeSlot): { emoji: string; name: string; unlockHour: number } {
   return {
-    morning:   { emoji: '🌅', name: '아침', unlockHour: 0 },
+    morning:   { emoji: '🌅', name: '아침', unlockHour: 7 },
     afternoon: { emoji: '☀️', name: '낮',   unlockHour: 12 },
-    evening:   { emoji: '🌙', name: '저녁', unlockHour: 18 },
+    evening:   { emoji: '🌆', name: '저녁', unlockHour: 18 },
+    night:     { emoji: '🌙', name: '밤',   unlockHour: 23 },
   }[slot];
 }
 

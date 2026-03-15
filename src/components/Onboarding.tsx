@@ -27,7 +27,7 @@ export default function Onboarding({ onStart }: Props) {
           />
         </div>
         <h1 className="text-2xl font-bold text-gray-800 dark:text-white text-center leading-tight">
-          초록하루에<br />오신 걸 환영해요 🌿
+          플랜티에<br />오신 걸 환영해요 🌿
         </h1>
         <p className="text-sm text-gray-500 dark:text-gray-400 mt-2 text-center">
           매일 작은 습관으로 식물과 함께 성장해요
