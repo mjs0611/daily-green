@@ -34,18 +34,25 @@ export default function TimeSlotMissions({
   const [selected, setSelected] = useState<{ mission: Mission; slotId: string } | null>(null);
 
   return (
-    <div className="mx-4 mt-3 glass-panel rounded-3xl p-5 shadow-sm">
-      <div className="flex items-center justify-between mb-4">
-        <h2 className="text-sm font-bold tracking-wide text-gray-800 dark:text-gray-100 flex items-center gap-1.5">
-          <span>🌿</span> 오늘의 미션
-        </h2>
-        <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-900/30 px-2 py-0.5 rounded-full">
-          {totalCompleted}/{total} 완료
+    <div className="mx-4 mt-4 toss-card rounded-2xl overflow-hidden">
+      {/* Header */}
+      <div className="flex items-center justify-between px-6 pt-5 pb-3">
+        <h3
+          className="text-lg font-black"
+          style={{ color: "var(--toss-on-surface)", fontFamily: "var(--font-headline, sans-serif)" }}
+        >
+          오늘의 미션
+        </h3>
+        <span
+          className="text-xs font-bold px-3 py-1 rounded-full"
+          style={{ backgroundColor: "rgba(0,78,203,0.08)", color: "var(--toss-primary)" }}
+        >
+          {total - totalCompleted > 0 ? `${total - totalCompleted}개 남음` : "🎉 완료!"}
         </span>
       </div>
 
       {/* 시간대 탭 */}
-      <div className="flex gap-1 mb-4">
+      <div className="flex gap-1.5 px-4 pb-3">
         {ALL_SLOTS.map((slot) => {
           const m = getSlotMeta(slot);
           const isCurrent = slot === currentSlot;
@@ -57,13 +64,15 @@ export default function TimeSlotMissions({
           return (
             <div
               key={slot}
-              className={`flex-1 text-center py-1 rounded-lg text-[11px] font-medium transition-colors ${
-                isCurrent
-                  ? "bg-emerald-500 text-white"
+              className="flex-1 text-center py-1.5 rounded-xl text-[11px] font-bold"
+              style={{
+                backgroundColor: isCurrent
+                  ? "var(--toss-primary)"
                   : slotDone
-                  ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400"
-                  : "bg-gray-100 dark:bg-gray-700/50 text-gray-400 dark:text-gray-500"
-              }`}
+                  ? "rgba(0,78,203,0.08)"
+                  : "var(--toss-surface-low)",
+                color: isCurrent ? "#fff" : slotDone ? "var(--toss-primary)" : "var(--toss-on-surface-variant)",
+              }}
             >
               {m.emoji} {m.name}
             </div>
@@ -71,36 +80,46 @@ export default function TimeSlotMissions({
         })}
       </div>
 
-      {/* 현재 시간대 미션 */}
-      <div className="space-y-2">
-        {missionIds.map((missionId) => {
+      {/* Mission list */}
+      <div>
+        {missionIds.map((missionId, idx) => {
           const mission = getMissionById(missionId);
           if (!mission) return null;
           const slotId = `${currentSlot}_${missionId}`;
           return (
-            <MissionCard
-              key={slotId}
-              mission={mission}
-              isCompleted={completedMissions.includes(slotId)}
-              onSelect={() => setSelected({ mission, slotId })}
-            />
+            <div key={slotId}>
+              {idx > 0 && (
+                <div className="mx-6" style={{ height: 1, backgroundColor: "var(--toss-surface-high)" }} />
+              )}
+              <MissionCard
+                mission={mission}
+                isCompleted={completedMissions.includes(slotId)}
+                onSelect={() => setSelected({ mission, slotId })}
+              />
+            </div>
           );
         })}
       </div>
 
+      {/* Completion message */}
       {slotCompleted === missionIds.length && missionIds.length > 0 && (
-        <div className="mt-3 p-3 bg-green-50 dark:bg-green-900/20 rounded-2xl text-center">
-          <p className="text-sm font-semibold text-green-600 dark:text-green-400">
+        <div className="mx-4 mb-3 p-3 rounded-xl text-center"
+          style={{ backgroundColor: "rgba(0,108,73,0.08)" }}
+        >
+          <p className="text-sm font-semibold" style={{ color: "var(--toss-secondary)" }}>
             {allSlotsCompleted ? "🎉 오늘 미션 완주! 내일 또 만나요!" : `✅ ${meta.name} 미션 완료!`}
           </p>
         </div>
       )}
 
-      {/* 미션 인터랙션 모달 */}
+
       {selected && (
         <MissionInteractionModal
           mission={selected.mission}
-          onComplete={() => onComplete(selected.slotId)}
+          onComplete={() => {
+            onComplete(selected.slotId);
+            setSelected(null);
+          }}
           onClose={() => setSelected(null)}
         />
       )}

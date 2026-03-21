@@ -16,18 +16,18 @@ interface Props {
   justLeveledUp?: boolean;
   onGraduate?: () => void;
   onComboTap?: (combo: number) => void;
+  compact?: boolean; // hero card right-side mode
 }
 
 type Particle = { id: number; x: number; y: number; emoji: string; big: boolean };
 
 export default function PlantDisplay({
   stage, plantType, isWilting, isDead, xp, xpRequired,
-  justLeveledUp, onGraduate, onComboTap,
+  justLeveledUp, onGraduate, onComboTap, compact = false,
 }: Props) {
   const [celebrating, setCelebrating] = useState(false);
   const info = STAGE_INFO[stage];
   const typeInfo = PLANT_TYPE_INFO[plantType];
-  const progress = Math.min(xp / xpRequired, 1);
 
   // Combo state
   const [combo, setCombo] = useState(0);
@@ -106,7 +106,57 @@ export default function PlantDisplay({
     if (comboResetRef.current) clearTimeout(comboResetRef.current);
   }, []);
 
-  // Combo badge color
+  // ── Compact (hero card) mode ─────────────────────────────────────────────
+  if (compact) {
+    const imageFilter = isDead ? undefined
+      : isWilting ? `sepia(0.6) brightness(0.85) hue-rotate(${typeInfo.hueRotate}deg)`
+      : typeInfo.hueRotate ? `hue-rotate(${typeInfo.hueRotate}deg)` : undefined;
+    return (
+      <div className="relative flex-shrink-0" ref={containerRef} onClick={handlePlantTap}>
+        <div
+          ref={squishRef}
+          className="w-20 h-20 rounded-full flex items-center justify-center cursor-pointer select-none overflow-visible"
+          style={{
+            backgroundColor: "rgba(0,100,255,0.06)",
+            animation: !isDead && !isWilting ? "breathe 4s ease-in-out infinite" : undefined,
+          }}
+        >
+          {isDead ? (
+            <span className="text-4xl">🪦</span>
+          ) : (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={info.image}
+              alt={info.name}
+              className="w-16 h-16 object-contain"
+              style={{ filter: imageFilter }}
+            />
+          )}
+        </div>
+        {/* particles */}
+        {particles.map(p => (
+          <span
+            key={p.id}
+            className="absolute pointer-events-none animate-float-up"
+            style={{ left: p.x - 10, top: p.y - 10, fontSize: p.big ? "1.5rem" : "1rem", zIndex: 20 }}
+          >
+            {p.emoji}
+          </span>
+        ))}
+        {/* combo badge */}
+        {combo > 1 && !isDead && (
+          <div
+            key={comboBadgeKey}
+            className="absolute -top-2 -right-2 text-[10px] font-bold rounded-full px-1.5 py-0.5 min-w-[24px] text-center animate-combo-pop bg-yellow-400 text-yellow-900"
+          >
+            x{combo}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // ── Combo badge color (full mode) ────────────────────────────────────────
   const badgeColor =
     combo >= 30 ? "bg-yellow-400 text-yellow-900 shadow-[0_0_12px_rgba(250,204,21,0.6)]" :
     combo >= 20 ? "bg-purple-500 text-white shadow-[0_0_10px_rgba(168,85,247,0.5)]" :
@@ -124,9 +174,10 @@ export default function PlantDisplay({
 
       {/* Plant type badge */}
       {plantType !== "green" && (
-        <div className="absolute top-3 left-3 flex items-center gap-1 bg-white/80 dark:bg-gray-900/80 rounded-full px-2 py-0.5 backdrop-blur-sm">
+        <div className="absolute top-3 left-3 flex items-center gap-1 rounded-full px-2 py-0.5 backdrop-blur-sm"
+          style={{ backgroundColor: "var(--toss-surface-lowest)", boxShadow: "0 1px 4px rgba(0,0,0,0.08)" }}>
           <span className="text-xs">{typeInfo.emoji}</span>
-          <span className="text-[10px] font-semibold text-gray-600 dark:text-gray-300">{typeInfo.name}</span>
+          <span className="text-[10px] font-semibold" style={{ color: "var(--toss-on-surface-variant)" }}>{typeInfo.name}</span>
         </div>
       )}
 
@@ -197,29 +248,12 @@ export default function PlantDisplay({
 
       {/* Stage name & description */}
       <div className="text-center mt-2">
-        <p className="text-lg font-bold text-gray-800 dark:text-white">{info.name}</p>
-        <p className="text-sm text-gray-500 dark:text-gray-400">
+        <p className="text-lg font-bold" style={{ color: "var(--toss-on-surface)" }}>{info.name}</p>
+        <p className="text-sm" style={{ color: "var(--toss-on-surface-variant)" }}>
           {isDead ? "💀 식물이 떠났어요..." : isWilting ? "😢 식물이 힘들어요!" : info.description}
         </p>
       </div>
 
-      {/* XP Progress */}
-      {!isDead && stage !== "special" && (
-        <div className="w-full px-6">
-          <div className="flex justify-between text-xs font-medium text-emerald-700 dark:text-emerald-300 mb-2">
-            <span>성장도</span>
-            <span>{xp} / {xpRequired} XP</span>
-          </div>
-          <div className="bg-emerald-100 dark:bg-emerald-900/40 rounded-full h-3.5 overflow-hidden shadow-inner border border-emerald-200/50 dark:border-emerald-700/30">
-            <div
-              className="h-full bg-gradient-to-r from-emerald-400 to-emerald-500 dark:from-emerald-500 dark:to-emerald-400 rounded-full transition-all duration-700 ease-out relative"
-              style={{ width: `${progress * 100}%` }}
-            >
-              <div className="absolute inset-0 bg-white/20 w-full animate-pulse" />
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Graduation */}
       {stage === "special" && (

@@ -1,37 +1,50 @@
 @import "tailwindcss";
 
-@import "tailwindcss";
-
 /* class-based dark mode */
 @variant dark (&:where(.dark, .dark *));
 
 :root {
-  --color-primary: #10B981;
-  --color-success: #059669;
+  /* Toss Design System — Light */
+  --toss-primary: #004ecb;
+  --toss-primary-container: #0064ff;
+  --toss-secondary: #006c49;
+  --toss-secondary-fixed: #63fdbb;
+  --toss-surface: #fbf9f8;
+  --toss-surface-low: #f5f3f3;
+  --toss-surface-lowest: #ffffff;
+  --toss-surface-high: #eae8e7;
+  --toss-on-surface: #1b1c1c;
+  --toss-on-surface-variant: #424656;
+
+  /* Legacy tokens (mapped to Toss values) */
+  --color-primary: #004ecb;
+  --color-success: #006c49;
   --color-warning: #F59E0B;
-  --color-danger: #EF4444;
-  --color-bg: #F4F6F5;
-  --color-surface: #FFFFFF;
-  --color-surface-glass: #FFFFFF;
-  --color-text: #1C241E;
-  --color-text-secondary: #64746B;
-  --firefly-color: rgba(16, 185, 129, 0.2);
+  --color-danger: #ba1a1a;
+  --color-bg: #fbf9f8;
+  --color-surface: #ffffff;
+  --color-text: #1b1c1c;
+  --color-text-secondary: #424656;
 }
 
 .dark {
-  /* Nature Premium Dark Theme - Deep Forest Night */
-  --color-primary: #34D399;
-  /* Emerald 400 */
-  --color-success: #10B981;
-  /* Emerald 500 */
-  --color-bg: #09100D;
-  /* Deep dark green-black */
-  --color-surface: #111C16;
-  /* Dark forest surface */
-  --color-surface-glass: rgba(17, 28, 22, 0.6);
-  --color-text: #F1F5F3;
-  --color-text-secondary: #94A39A;
-  --firefly-color: rgba(52, 211, 153, 0.4);
+  --toss-primary: #b3c5ff;
+  --toss-primary-container: #4d88ff;
+  --toss-secondary: #3fe0a1;
+  --toss-secondary-fixed: #63fdbb;
+  --toss-surface: #0f1714;
+  --toss-surface-low: #141d17;
+  --toss-surface-lowest: #1a2620;
+  --toss-surface-high: #1e2e24;
+  --toss-on-surface: #e8f0ec;
+  --toss-on-surface-variant: #9aada2;
+
+  --color-primary: #b3c5ff;
+  --color-success: #3fe0a1;
+  --color-bg: #0f1714;
+  --color-surface: #1a2620;
+  --color-text: #e8f0ec;
+  --color-text-secondary: #9aada2;
 }
 
 @theme inline {
@@ -40,13 +53,13 @@
 }
 
 body {
+  font-family: var(--font-body, 'Inter', system-ui, sans-serif);
   background-color: var(--color-bg);
   color: var(--color-text);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   max-width: 430px;
   margin: 0 auto;
-  /* Safe area: 노치/홈 인디케이터 대응 */
   padding-top: env(safe-area-inset-top);
   padding-bottom: env(safe-area-inset-bottom);
   padding-left: env(safe-area-inset-left);
@@ -54,12 +67,16 @@ body {
   transition: background-color 0.4s ease, color 0.4s ease;
 }
 
-/* Safe area를 고려한 고정 하단 요소 */
+.font-headline {
+  font-family: var(--font-headline, 'Plus Jakarta Sans', sans-serif);
+}
+
+/* Safe area for fixed bottom elements */
 .safe-area-bottom {
   padding-bottom: max(env(safe-area-inset-bottom), 16px);
 }
 
-/* 🌿 네이처 프리미엄을 위한 공통 유틸리티 */
+/* Main page wrapper */
 .nature-page {
   position: relative;
   z-index: 0;
@@ -67,8 +84,8 @@ body {
   background-color: var(--color-bg);
 }
 
-/* 반딧불이(Firefly) 파티클 배경 효과 (다크모델일 때 은은하게) */
-.dark .nature-page::before {
+/* Dark mode ambient glow (subtle) */
+.dark .nature-page::after {
   content: "";
   position: fixed;
   top: 0;
@@ -77,76 +94,39 @@ body {
   bottom: 0;
   z-index: -1;
   pointer-events: none;
-  background-image:
-    radial-gradient(var(--firefly-color) 1.5px, transparent 2px),
-    radial-gradient(var(--firefly-color) 1px, transparent 1.5px);
-  background-size: 60px 60px, 90px 90px;
-  background-position: 0 0, 30px 45px;
-  opacity: 0.5;
-  animation: firefly-drift 40s linear infinite;
+  background: radial-gradient(circle at 50% 10%, rgba(63, 224, 161, 0.05) 0%, transparent 70%);
 }
 
-/* 은은한 숲의 안개/빛 퍼짐 효과 */
-.dark .nature-page::after {
-  content: "";
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  z-index: -2;
-  pointer-events: none;
-  background: radial-gradient(circle at 50% 10%, rgba(16, 185, 129, 0.08) 0%, transparent 70%);
-}
-
-@keyframes firefly-drift {
-  0% {
-    transform: translateY(0) translateX(0);
-  }
-
-  50% {
-    transform: translateY(-60px) translateX(20px);
-  }
-
-  100% {
-    transform: translateY(-120px) translateX(0);
-  }
-}
-
-/* 카드 유틸리티 */
+/* Card utility — tonal layering, no explicit border */
 .glass-panel {
-  background: #ffffff;
-  border: 1px solid rgba(0, 0, 0, 0.06);
-  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.06);
+  background: var(--toss-surface-lowest);
+  box-shadow: 0 2px 8px rgba(0, 78, 203, 0.04), 0 1px 2px rgba(0, 0, 0, 0.04);
 }
-
 .dark .glass-panel {
-  background: #111C16;
-  border: 1px solid rgba(52, 211, 153, 0.08);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  background: var(--toss-surface-low);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
-/* 하단 캡슐 탭 */
-.capsule-nav {
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+/* Dark-mode-safe surface card */
+.toss-card {
+  background-color: var(--toss-surface-lowest);
 }
-.capsule-nav:hover,
-.capsule-nav:focus-within {
-  box-shadow: 0 0 20px rgba(16, 185, 129, 0.25), 0 0 40px rgba(52, 211, 153, 0.1);
-  border-color: rgba(52, 211, 153, 0.4);
+.dark .toss-card {
+  background-color: var(--toss-surface-low);
 }
 
-/* 🪴 식물 생동감 애니메이션 */
+/* Dark-mode-safe nav/header blur bg */
+.toss-nav-bg {
+  background-color: rgba(251, 249, 248, 0.88);
+}
+.dark .toss-nav-bg {
+  background-color: rgba(15, 23, 20, 0.92);
+}
+
+/* ── Animations ── */
 @keyframes breathe {
-
-  0%,
-  100% {
-    transform: scale(1) translateY(0);
-  }
-
-  50% {
-    transform: scale(1.02) translateY(-2px);
-  }
+  0%, 100% { transform: scale(1) translateY(0); }
+  50%       { transform: scale(1.02) translateY(-2px); }
 }
 
 .animate-breathe {
@@ -154,75 +134,32 @@ body {
 }
 
 @keyframes wilt {
-
-  0%,
-  100% {
-    transform: rotate(0deg) translateY(0);
-  }
-
-  25% {
-    transform: rotate(-3deg) translateY(2px);
-  }
-
-  75% {
-    transform: rotate(3deg) translateY(2px);
-  }
+  0%, 100% { transform: rotate(0deg) translateY(0); }
+  25%       { transform: rotate(-3deg) translateY(2px); }
+  75%       { transform: rotate(3deg) translateY(2px); }
 }
 
 @keyframes levelup-burst {
-  0% {
-    transform: scale(0.8) translateY(10px);
-    filter: brightness(1);
-  }
-
-  50% {
-    transform: scale(1.2) translateY(-10px);
-    filter: brightness(1.2);
-  }
-
-  100% {
-    transform: scale(1) translateY(0);
-    filter: brightness(1);
-  }
+  0%   { transform: scale(0.8) translateY(10px); filter: brightness(1); }
+  50%  { transform: scale(1.2) translateY(-10px); filter: brightness(1.2); }
+  100% { transform: scale(1) translateY(0); filter: brightness(1); }
 }
 
 @keyframes float {
-
-  0%,
-  100% {
-    transform: translateY(0px);
-  }
-
-  50% {
-    transform: translateY(-6px);
-  }
+  0%, 100% { transform: translateY(0px); }
+  50%       { transform: translateY(-6px); }
 }
 
 .plant-float {
   animation: float 4s ease-in-out infinite;
 }
 
-/* 젤리 처럼 튕기는 인터랙션 효과 */
 @keyframes jelly-bounce {
-  0% {
-    transform: scale(1);
-  }
-
-  25% {
-    transform: scale(1.05, 0.95);
-  }
-
-  50% {
-    transform: scale(0.95, 1.05);
-  }
-
-  75% {
-    transform: scale(1.02, 0.98);
-  }
-
-  100% {
-    transform: scale(1);
-  }
+  0%   { transform: scale(1); }
+  25%  { transform: scale(1.05, 0.95); }
+  50%  { transform: scale(0.95, 1.05); }
+  75%  { transform: scale(1.02, 0.98); }
+  100% { transform: scale(1); }
 }
 
 .animate-jelly {

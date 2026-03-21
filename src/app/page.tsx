@@ -3,7 +3,7 @@ import { useEffect, useState, useCallback, useRef, useMemo } from "react";
 import { Button, Toast } from "@toss/tds-mobile";
 import { PlantState, GrowthEvent } from "@/types/plant";
 import {
-  loadState, saveState, completeMission, applyAdBoost, applyMiniWatering,
+  loadState, completeMission, applyAdBoost, applyMiniWatering,
   applyMoodInteract, claimLoginBonus, graduatePlant, resetPlant,
   STAGE_INFO, isAdAvailable, getAllMissionIds,
   checkStreakMilestone, applyStreakMilestone,
@@ -11,13 +11,12 @@ import {
 } from "@/lib/plantState";
 import { getMissionById, parseSlotId } from "@/lib/missions";
 import { haptic, logEvent } from "@/lib/bridge";
-import { getCurrentSeason, SEASON_INFO, PLANT_TYPE_INFO } from "@/lib/season";
+import { PLANT_TYPE_INFO } from "@/lib/season";
 import { ONBOARDED_KEY, COMBO_MILESTONES } from "@/lib/constants";
 import { useToast } from "@/hooks/useToast";
 import { useCreatureSpawner } from "@/hooks/useCreatureSpawner";
 import { useDebouncedSave } from "@/hooks/useDebouncedSave";
 import PlantDisplay from "@/components/PlantDisplay";
-import StatBar from "@/components/StatBar";
 import AdButton from "@/components/AdButton";
 import ShareSheet from "@/components/ShareSheet";
 import BannerAd from "@/components/BannerAd";
@@ -31,13 +30,35 @@ import GrowthEventPopup from "@/components/GrowthEventPopup";
 import GardenView from "@/components/GardenView";
 import FloatingCreature, { Creature } from "@/components/FloatingCreature";
 import PestAdModal from "@/components/PestAdModal";
+import ProfilePage from "@/components/ProfilePage";
 import { useTheme } from "@/lib/theme";
+
+// XP bar with mount animation (Stitch 9)
+function HeroXpBar({ xp, xpRequired }: { xp: number; xpRequired: number }) {
+  const [width, setWidth] = useState(0);
+  useEffect(() => {
+    const id = requestAnimationFrame(() => setWidth(Math.min((xp / xpRequired) * 100, 100)));
+    return () => cancelAnimationFrame(id);
+  }, [xp, xpRequired]);
+  return (
+    <div className="h-2.5 w-full rounded-full overflow-hidden" style={{ backgroundColor: "var(--toss-surface-high)" }}>
+      <div
+        className="h-full rounded-full"
+        style={{
+          width: `${width}%`,
+          background: "linear-gradient(to right, #004ecb, #0064ff)",
+          transition: "width 1s cubic-bezier(0.4, 0, 0.2, 1)",
+        }}
+      />
+    </div>
+  );
+}
 
 export default function HomePage() {
   const [plant, setPlant] = useState<PlantState | null>(null);
   const [justLeveledUp, setJustLeveledUp] = useState(false);
   const [showShare, setShowShare] = useState(false);
-  const [activeTab, setActiveTab] = useState<'home' | 'garden'>('home');
+  const [activeTab, setActiveTab] = useState<'home' | 'garden' | 'profile'>('home');
   const [growthEvent, setGrowthEvent] = useState<GrowthEvent | null>(null);
   const { theme, toggle } = useTheme();
   const [showSplash, setShowSplash] = useState(true);
@@ -55,10 +76,7 @@ export default function HomePage() {
   useEffect(() => { plantRef.current = plant; }, [plant]);
   useEffect(() => { creatureRef.current = creature; }, [creature]);
 
-  const season = getCurrentSeason();
-  const seasonInfo = SEASON_INFO[season];
-
-  const { toast, openToast } = useToast();
+const { toast, openToast } = useToast();
   useDebouncedSave(plant);
 
   const triggerLevelUp = useCallback((newStage: PlantState["stage"]) => {
@@ -108,7 +126,7 @@ export default function HomePage() {
         const { graniteEvent } = await import("@apps-in-toss/web-framework");
         const sub = graniteEvent.addEventListener("backEvent", {
           onEvent: () => {
-            if (activeTab === 'garden') { setActiveTab('home'); return; }
+            if (activeTab === 'garden' || activeTab === 'profile') { setActiveTab('home'); return; }
             setShowShare(prev => (prev ? false : prev));
           },
         });
@@ -263,6 +281,23 @@ export default function HomePage() {
     onSpawn: handleCreatureSpawn,
   });
 
+  const { totalCompleted, total } = useMemo(() => {
+    if (!plant) return { totalCompleted: 0, total: 0 };
+    const allMissionIds = getAllMissionIds(plant.timeSlotMissions);
+    return {
+      totalCompleted: allMissionIds.filter(id => plant.completedMissions.includes(id)).length,
+      total: allMissionIds.length,
+    };
+  }, [plant?.timeSlotMissions, plant?.completedMissions]);
+
+  const adAvailable = useMemo(() => plant ? isAdAvailable(plant) : false, [plant?.adLastWatched]);
+
+  const streakBadge = useMemo(() =>
+    !plant ? null :
+    plant.streak >= 30 ? "🏆 월간 마스터" :
+    plant.streak >= 7  ? "⭐ 주간 달성"   : null,
+  [plant?.streak]);
+
   // ── Render guards ───────────────────────────────────────────
   if (showSplash) return <Splash onDone={() => setShowSplash(false)} />;
   if (!onboarded) return <Onboarding onStart={handleOnboardingStart} />;
@@ -274,88 +309,88 @@ export default function HomePage() {
     );
   }
 
-  const { totalCompleted, total } = useMemo(() => {
-    const allMissionIds = getAllMissionIds(plant.timeSlotMissions);
-    return {
-      totalCompleted: allMissionIds.filter(id => plant.completedMissions.includes(id)).length,
-      total: allMissionIds.length,
-    };
-  }, [plant.timeSlotMissions, plant.completedMissions]);
-
-  const adAvailable = useMemo(() => isAdAvailable(plant), [plant.adLastWatched]);
-
-  const streakBadge = useMemo(() =>
-    plant.streak >= 30 ? "🏆 월간 마스터" :
-    plant.streak >= 7  ? "⭐ 주간 달성"   : null,
-  [plant.streak]);
-
   return (
-    <div className="min-h-screen nature-page pb-28">
-      {/* Header */}
-      <div className="flex items-center justify-between px-4 pt-4 pb-2">
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-1">
-            <span className="text-2xl font-bold whitespace-nowrap">플랜티</span>
-            <span>🌿</span>
+    <div className="min-h-screen nature-page pb-32">
+      {/* ── Header ── */}
+      <header className="fixed top-0 left-0 right-0 max-w-[430px] mx-auto z-50 toss-nav-bg backdrop-blur-xl"
+        style={{ boxShadow: "0 1px 0 rgba(0,0,0,0.05)" }}
+      >
+        <div className="flex items-center justify-between px-5 h-14">
+          <h1
+            className="text-xl font-black tracking-tight"
+            style={{ color: "var(--toss-on-surface)", fontFamily: "var(--font-headline, sans-serif)" }}
+          >
+            플랜티
             {plant.name && (
               <button
                 onClick={() => { setNameInput(plant.name ?? ''); setEditingName(true); }}
-                className="text-xs text-emerald-600 dark:text-emerald-400 font-medium ml-1 truncate max-w-[80px]"
+                className="text-sm font-medium ml-2"
+                style={{ color: "var(--toss-primary)" }}
               >
                 &quot;{plant.name}&quot;
               </button>
             )}
-          </div>
-          <div className="flex items-center gap-1 mt-0.5 flex-wrap">
-            <span className="text-orange-500 font-semibold text-xs whitespace-nowrap">🔥 {plant.streak}일 연속</span>
-            {plant.streakShields > 0 && (
-              <span
-                title="스트릭 실드: 하루 빠져도 연속 기록을 지켜줘요"
-                className="text-[10px] bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 px-1.5 py-0.5 rounded-full whitespace-nowrap cursor-help"
-              >
-                🛡 실드×{plant.streakShields}
-              </span>
-            )}
-            {streakBadge && (
-              <span className="text-[10px] bg-orange-100 dark:bg-orange-900/30 text-orange-600 dark:text-orange-400 px-1.5 py-0.5 rounded-full font-medium whitespace-nowrap">
-                {streakBadge}
-              </span>
-            )}
+          </h1>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={toggle}
+              className="p-2 rounded-full transition-colors"
+              style={{ color: "var(--toss-on-surface-variant)" }}
+            >
+              {theme === "dark" ? "☀️" : "🌙"}
+            </button>
+            <button
+              onClick={() => { setShowShare(true); logEvent("share_open", { stage: plant.stage }); }}
+              className="relative p-2 rounded-full transition-colors"
+              style={{ color: "var(--toss-on-surface-variant)" }}
+            >
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6 6 0 00-5-5.917V5a1 1 0 10-2 0v.083A6 6 0 006 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+              </svg>
+              {plant.streak > 0 && (
+                <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full" style={{ backgroundColor: "var(--toss-primary)" }} />
+              )}
+            </button>
           </div>
         </div>
-        <div className="flex items-center gap-1 flex-shrink-0 ml-2">
-          <button onClick={() => { setShowShare(true); logEvent("share_open", { stage: plant.stage }); }} className="text-xs font-medium px-2.5 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 transition-colors whitespace-nowrap">공유</button>
-          <button onClick={toggle} className="text-xs font-medium px-2.5 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 transition-colors whitespace-nowrap">{theme === "dark" ? "라이트" : "다크"}</button>
+        {/* streak / badges sub-row */}
+        <div className="flex items-center gap-2 px-5 pb-2 flex-wrap">
+          <span className="text-xs font-semibold" style={{ color: "#e87600" }}>🔥 {plant.streak}일 연속</span>
+          {plant.streakShields > 0 && (
+            <span className="text-[10px] px-2 py-0.5 rounded-full font-medium"
+              style={{ backgroundColor: "rgba(0,78,203,0.08)", color: "var(--toss-primary)" }}
+            >
+              🛡 실드×{plant.streakShields}
+            </span>
+          )}
+          {streakBadge && (
+            <span className="text-[10px] px-2 py-0.5 rounded-full font-medium"
+              style={{ backgroundColor: "rgba(232,118,0,0.10)", color: "#e87600" }}
+            >
+              {streakBadge}
+            </span>
+          )}
         </div>
-      </div>
+      </header>
+      {/* header spacer */}
+      <div className="h-[88px]" />
 
       {/* Garden Tab */}
       {activeTab === 'garden' && (
-        <GardenView garden={plant.garden} currentType={plant.plantType} />
+        <GardenView plant={plant} adAvailable={adAvailable} onAdComplete={handleAdComplete} />
       )}
 
       {/* Home Tab */}
       {activeTab === 'home' && <>
 
-      {/* Stage badge + Season */}
-      <div className="px-4 mt-1 flex items-center gap-2">
-        <div className="inline-flex items-center gap-1.5 bg-white dark:bg-gray-800 rounded-full px-3 py-1 shadow-sm">
-          <div className="w-1.5 h-1.5 rounded-full bg-green-400" />
-          <span className="text-xs font-medium text-gray-600 dark:text-gray-300">{STAGE_INFO[plant.stage].name}</span>
-          <span className="text-xs text-gray-400">·</span>
-          <span className="text-xs text-gray-400">{plant.totalDaysAlive}일째</span>
-        </div>
-        <div className="inline-flex items-center gap-1 bg-white dark:bg-gray-800 rounded-full px-2.5 py-1 shadow-sm">
-          <span className="text-xs">{seasonInfo.emoji}</span>
-          <span className="text-[10px] font-medium text-gray-500 dark:text-gray-400">{seasonInfo.desc}</span>
-        </div>
-      </div>
-
       {/* Weather */}
       <WeatherBanner />
 
-      {/* Plant */}
-      <div className="mx-4 mt-3 bg-gradient-to-b from-[#EAF5EE] to-white dark:from-emerald-900/30 dark:to-[#09100D] rounded-3xl relative overflow-hidden border border-emerald-100/80 dark:border-emerald-800/20 shadow-sm">
+      {/* Hero Card */}
+      <div
+        className="mx-4 mt-3 toss-card rounded-3xl relative overflow-hidden"
+        style={{ boxShadow: "0 4px 24px -4px rgba(0,78,203,0.06)" }}
+      >
         {creature && (
           <FloatingCreature
             creature={creature}
@@ -363,14 +398,31 @@ export default function HomePage() {
             onPestTap={() => setShowPestModal(true)}
           />
         )}
-        {!plant.name && !plant.isDead && (
+        {/* 식물 이름 + 상태 뱃지 */}
+        <div className="flex items-center justify-between px-5 pt-5 pb-1">
+          <div className="flex items-center gap-2">
+            <span
+              className="text-[10px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full"
+              style={{ backgroundColor: "rgba(0,78,203,0.08)", color: "var(--toss-primary)" }}
+            >
+              {STAGE_INFO[plant.stage].name}
+            </span>
+            {plant.isWilting && !plant.isDead && (
+              <span className="text-[10px] font-bold px-2 py-0.5 rounded-full"
+                style={{ backgroundColor: "rgba(186,26,26,0.08)", color: "#ba1a1a" }}>
+                ⚠️ 힘들어요
+              </span>
+            )}
+          </div>
           <button
-            onClick={() => { setNameInput(''); setEditingName(true); }}
-            className="absolute top-3 right-3 text-[10px] text-emerald-600 dark:text-emerald-400 bg-emerald-50/80 dark:bg-emerald-900/50 px-2 py-1 rounded-full font-medium z-10"
+            className="text-sm font-medium"
+            style={{ color: "var(--toss-primary)" }}
+            onClick={() => { setNameInput(plant.name ?? ''); setEditingName(true); }}
           >
-            ✏️ 이름 짓기
+            {plant.name ? `"${plant.name}" ✏️` : "이름 짓기 ✏️"}
           </button>
-        )}
+        </div>
+        {/* 식물 캐릭터 (가운데 크게) */}
         <PlantDisplay
           stage={plant.stage}
           plantType={plant.plantType}
@@ -382,33 +434,76 @@ export default function HomePage() {
           onGraduate={plant.stage === 'special' ? handleGraduate : undefined}
           onComboTap={handleComboTap}
         />
-        <div className="pb-3">
+        {/* XP bar */}
+        {!plant.isDead && plant.stage !== 'special' && (
+          <div className="px-5 pb-2">
+            <div className="flex justify-between items-center mb-1">
+              <span className="text-[10px] font-bold uppercase tracking-wide" style={{ color: "var(--toss-primary)" }}>Growth XP</span>
+              <span className="text-[10px] font-semibold" style={{ color: "var(--toss-on-surface-variant)" }}>{plant.xp} / {plant.xpRequired}</span>
+            </div>
+            <HeroXpBar xp={plant.xp} xpRequired={plant.xpRequired} />
+          </div>
+        )}
+        {/* Mood */}
+        <div className="px-5 pb-4 mt-1">
           <PlantMood plant={plant} completedToday={totalCompleted} onInteract={handleMoodInteract} />
         </div>
         {plant.isDead && (
-          <div className="px-4 pb-4">
+          <div className="px-5 pb-4">
             <Button display="full" color="dark" size="large" onClick={handleReset}>새 씨앗 심기 🌱</Button>
           </div>
         )}
       </div>
 
-      {/* Wilting */}
-      {plant.isWilting && !plant.isDead && (
-        <div className="mx-4 mt-3 p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-2xl">
-          <p className="text-sm text-red-600 dark:text-red-400 font-medium">⚠️ 식물이 힘들어요! 빨리 돌봐주세요.</p>
+      {/* 광고 버튼 - 캐릭터 바로 아래 */}
+      {!plant.isDead && (
+        <div className="mx-4 mt-3">
+          <AdButton onAdComplete={handleAdComplete} adAvailable={adAvailable} />
         </div>
       )}
 
-      {/* Stats */}
+      {/* Plant Status Grid */}
       {!plant.isDead && (
-        <div className="mx-4 mt-3 glass-panel rounded-2xl p-5 space-y-4">
-          <h2 className="text-sm font-bold text-gray-800 dark:text-gray-100 flex items-center gap-1.5">
-            <span>✨</span> 식물 상태
-          </h2>
-          <div className="space-y-4 pt-1">
-            <StatBar emoji="💧" label="수분" value={plant.stats.water} color="#3B82F6" />
-            <StatBar emoji="☀️" label="햇빛" value={plant.stats.sunlight} color="#F59E0B" />
-            <StatBar emoji="💚" label="건강" value={plant.stats.health} color="#10B981" />
+        <div className="mx-4 mt-4">
+          <h3
+            className="text-base font-bold mb-3"
+            style={{ color: "var(--toss-on-surface)", fontFamily: "var(--font-headline, sans-serif)" }}
+          >
+            식물 상태
+          </h3>
+          <div className="grid grid-cols-3 gap-2.5">
+            {[
+              { emoji: "☀️", label: "햇빛", value: plant.stats.sunlight,
+                display: plant.stats.sunlight >= 80 ? "Optimal" : plant.stats.sunlight >= 55 ? "Good" : plant.stats.sunlight >= 30 ? "Low" : "Critical" },
+              { emoji: "💚", label: "건강", value: plant.stats.health,   display: `${Math.round(plant.stats.health)}%` },
+              { emoji: "💧", label: "수분", value: plant.stats.water,    display: `${Math.round(plant.stats.water)}%` },
+            ].map(({ emoji, label, value, display }) => {
+              const isLow = value < 30;
+              return (
+                <div
+                  key={label}
+                  className="toss-card rounded-2xl p-4 flex flex-col items-center gap-1 text-center"
+                  style={{ boxShadow: "0 4px 12px rgba(0,0,0,0.03)" }}
+                >
+                  <span className="text-2xl">{emoji}</span>
+                  <p
+                    className="text-[10px] font-bold uppercase tracking-tight"
+                    style={{ color: "var(--toss-on-surface-variant)" }}
+                  >
+                    {label}
+                  </p>
+                  <p
+                    className="text-lg font-extrabold"
+                    style={{
+                      color: isLow ? "#ba1a1a" : "var(--toss-on-surface)",
+                      fontFamily: "var(--font-headline, sans-serif)",
+                    }}
+                  >
+                    {display}
+                  </p>
+                </div>
+              );
+            })}
           </div>
         </div>
       )}
@@ -431,18 +526,44 @@ export default function HomePage() {
         />
       )}
 
-      {/* Ads */}
+      {/* Bento: Tip + Growth Cycle */}
+      {!plant.isDead && (
+        <div className="grid grid-cols-2 gap-3 mx-4 mt-3">
+          <div className="toss-card rounded-2xl p-4">
+            <p className="text-[10px] font-black uppercase tracking-widest mb-1" style={{ color: "var(--toss-primary)" }}>오늘의 팁</p>
+            <p className="text-sm font-semibold leading-snug" style={{ color: "var(--toss-on-surface)" }}>
+              {plant.streak >= 7 ? "🌟 7일 연속! 주간 보너스 XP를 받으세요" :
+               plant.stats.water < 30 ? "💧 물 부족! 미션을 완료해 수분을 채워요" :
+               plant.stats.sunlight < 30 ? "☀️ 햇빛이 부족해요! 야외 활동 미션을 해보세요" :
+               "🌿 꾸준히 돌보면 식물이 쑥쑥 자라요!"}
+            </p>
+          </div>
+          <div className="rounded-2xl p-4" style={{ backgroundColor: "rgba(0,108,73,0.08)" }}>
+            <p className="text-[10px] font-black uppercase tracking-widest mb-1" style={{ color: "var(--toss-secondary)" }}>성장 단계</p>
+            <p className="text-sm font-semibold leading-snug" style={{ color: "var(--toss-on-surface)" }}>
+              {STAGE_INFO[plant.stage].description}
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Banner Ad */}
       {!plant.isDead && (
         <div className="mx-4 mt-3"><BannerAd /></div>
-      )}
-      {!plant.isDead && (
-        <div className="mx-4 mt-2">
-          <AdButton onAdComplete={handleAdComplete} adAvailable={adAvailable} />
-        </div>
       )}
 
       {/* End Home Tab */}
       </>}
+
+      {/* Profile Tab */}
+      {activeTab === 'profile' && (
+        <ProfilePage
+          plant={plant}
+          theme={theme}
+          onToggleTheme={toggle}
+          onReset={handleReset}
+        />
+      )}
 
       <Toast position="bottom" open={toast.open} text={toast.message} />
       <GrowthEventPopup event={growthEvent} onDismiss={() => setGrowthEvent(null)} />
@@ -459,19 +580,24 @@ export default function HomePage() {
       {/* 스트릭 마일스톤 팝업 */}
       {milestone && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm" onClick={() => setMilestone(null)}>
-          <div className="bg-white dark:bg-gray-900 rounded-3xl p-8 mx-6 text-center shadow-2xl" onClick={e => e.stopPropagation()}>
+          <div
+            className="toss-card rounded-3xl p-8 mx-6 text-center"
+            style={{ boxShadow: "0 24px 48px rgba(0,0,0,0.15)" }}
+            onClick={e => e.stopPropagation()}
+          >
             <div className="text-6xl mb-3">
               {milestone.streak >= 30 ? '🏆' : milestone.streak >= 14 ? '🌟' : milestone.streak >= 7 ? '⭐' : '🎉'}
             </div>
-            <p className="text-xl font-bold text-gray-800 dark:text-white mb-1">
+            <p className="text-xl font-bold mb-1" style={{ color: "var(--toss-on-surface)" }}>
               {milestone.streak}일 연속 달성!
             </p>
-            <p className="text-sm text-gray-500 dark:text-gray-400 mb-4">
+            <p className="text-sm mb-4" style={{ color: "var(--toss-on-surface-variant)" }}>
               꾸준히 돌봐줘서 고마워요 💚
             </p>
-            <p className="text-lg font-bold text-emerald-500">+{milestone.bonusXp} XP 보너스!</p>
+            <p className="text-lg font-bold" style={{ color: "var(--toss-secondary)" }}>+{milestone.bonusXp} XP 보너스!</p>
             <button
-              className="mt-5 w-full py-3 bg-emerald-500 text-white font-bold rounded-2xl"
+              className="mt-5 w-full py-3 font-bold rounded-2xl text-white"
+              style={{ background: "linear-gradient(135deg, #004ecb, #0064ff)" }}
               onClick={() => setMilestone(null)}
             >
               계속 키우기 🌱
@@ -483,29 +609,57 @@ export default function HomePage() {
       {/* 이름 편집 모달 */}
       {editingName && (
         <div className="fixed inset-0 z-50 flex items-end bg-black/40 backdrop-blur-sm" onClick={() => setEditingName(false)}>
-          <div className="w-full bg-white dark:bg-gray-900 rounded-t-3xl p-6 pb-8" onClick={e => e.stopPropagation()}>
-            <p className="text-lg font-bold text-gray-800 dark:text-white mb-1">내 식물 이름 짓기 🌿</p>
-            <p className="text-xs text-gray-400 mb-4">최대 12자</p>
+          <div
+            className="w-full toss-card rounded-t-3xl p-6 pb-8"
+            onClick={e => e.stopPropagation()}
+          >
+            <p className="text-lg font-bold mb-1" style={{ color: "var(--toss-on-surface)" }}>내 식물 이름 짓기 🌿</p>
+            <p className="text-xs mb-4" style={{ color: "var(--toss-on-surface-variant)" }}>최대 12자</p>
             <input
               value={nameInput}
               onChange={e => setNameInput(e.target.value)}
               placeholder="예: 봄이, 초록이, 미미..."
               maxLength={12}
-              className="w-full border border-gray-200 dark:border-gray-700 rounded-2xl px-4 py-3 text-base bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-emerald-400"
+              className="w-full rounded-2xl px-4 py-3 text-base focus:outline-none"
+              style={{
+                backgroundColor: "var(--toss-surface-low)",
+                color: "var(--toss-on-surface)",
+                border: "none",
+              }}
+              onFocus={e => { e.currentTarget.style.boxShadow = "0 0 0 2px rgba(0,78,203,0.25)"; }}
+              onBlur={e => { e.currentTarget.style.boxShadow = "none"; }}
               // eslint-disable-next-line jsx-a11y/no-autofocus
               autoFocus
             />
             <div className="flex gap-2 mt-4">
-              <button className="flex-1 py-3 rounded-2xl bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 font-semibold" onClick={() => setEditingName(false)}>취소</button>
-              <button className="flex-1 py-3 rounded-2xl bg-emerald-500 text-white font-bold" onClick={handleSaveName}>저장</button>
+              <button
+                className="flex-1 py-3 rounded-2xl font-semibold"
+                style={{ backgroundColor: "var(--toss-surface-low)", color: "var(--toss-on-surface-variant)" }}
+                onClick={() => setEditingName(false)}
+              >
+                취소
+              </button>
+              <button
+                className="flex-1 py-3 rounded-2xl font-bold text-white"
+                style={{ background: "linear-gradient(135deg, #004ecb, #0064ff)" }}
+                onClick={handleSaveName}
+              >
+                저장
+              </button>
             </div>
           </div>
         </div>
       )}
 
       {/* Bottom Tab Nav */}
-      <nav className="fixed bottom-5 left-1/2 -translate-x-1/2 w-[calc(100%-2rem)] max-w-sm bg-white/80 dark:bg-[#09100D]/90 backdrop-blur-xl border border-white/30 dark:border-emerald-500/20 rounded-full shadow-[0_8px_32px_rgba(0,0,0,0.12)] z-40 px-2 py-1.5 capsule-nav">
-        <div className="flex justify-around items-center h-12">
+      <nav
+        className="fixed bottom-0 left-0 right-0 max-w-[430px] mx-auto z-40 toss-nav-bg backdrop-blur-xl px-4 pb-6 pt-3"
+        style={{
+          borderRadius: "2.5rem 2.5rem 0 0",
+          boxShadow: "0 -1px 0 rgba(0,0,0,0.05), 0 12px 32px -4px rgba(0,84,216,0.08)",
+        }}
+      >
+        <div className="flex justify-around items-center">
           {([
             { id: 'home', label: '홈', icon: (
               <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
@@ -518,21 +672,24 @@ export default function HomePage() {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v13M9 21h6" />
               </svg>
             )},
+            { id: 'profile', label: '프로필', icon: (
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
+              </svg>
+            )},
           ] as const).map(({ id, label, icon }) => {
             const active = activeTab === id;
             return (
               <button
                 key={id}
                 onClick={() => setActiveTab(id)}
-                className={`relative flex-1 flex flex-col items-center justify-center h-full text-[11px] font-bold tracking-wide transition-all duration-300 rounded-full gap-0.5 ${
-                  active
-                    ? 'text-emerald-600 dark:text-emerald-400 bg-emerald-50/60 dark:bg-emerald-900/40'
-                    : 'text-gray-400 dark:text-gray-500 hover:text-emerald-500 dark:hover:text-emerald-600'
-                }`}
+                className="flex flex-col items-center justify-center px-5 py-2 rounded-full gap-0.5 text-[11px] font-bold transition-all duration-200 active:scale-90"
+                style={{
+                  color: active ? "var(--toss-primary)" : "var(--toss-on-surface-variant)",
+                  backgroundColor: active ? "rgba(0,78,203,0.08)" : "transparent",
+                  fontFamily: "var(--font-headline, sans-serif)",
+                }}
               >
-                {active && (
-                  <span className="absolute -top-1 w-8 h-1 bg-emerald-500 dark:bg-emerald-400 rounded-b-full shadow-[0_0_8px_rgba(16,185,129,0.7)]" />
-                )}
                 {icon}
                 {label}
               </button>

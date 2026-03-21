@@ -106,50 +106,36 @@ export default function AdButton({ onAdComplete, adAvailable }: Props) {
 
   const remainingSeconds = Math.ceil(((100 - progress) / 100) * 5);
 
-  return (
-    <div className="bg-white dark:bg-gray-800 rounded-3xl overflow-hidden shadow-sm">
-      {/* 배너 광고 슬롯 */}
-      <div className="relative h-16 bg-gradient-to-r from-slate-100 to-slate-200 dark:from-gray-700 dark:to-gray-600 flex items-center gap-3 px-4">
-        <span className="text-2xl">🌿</span>
-        <div>
-          <p className="text-xs font-bold text-gray-700 dark:text-gray-200">플랜티 프리미엄</p>
-          <p className="text-[10px] text-gray-400 dark:text-gray-500">광고 없이 즐기고 싶다면?</p>
+  if (phase === "loading") {
+    return (
+      <div className="py-3 px-4 rounded-2xl flex items-center justify-center gap-2" style={{ backgroundColor: "var(--toss-surface-high)" }}>
+        <span className="animate-spin text-sm">⏳</span>
+        <span className="text-xs font-medium" style={{ color: "var(--toss-on-surface-variant)" }}>광고 불러오는 중...</span>
+      </div>
+    );
+  }
+  if (phase === "watching" && !supported) {
+    return (
+      <div className="py-3 px-4 rounded-2xl flex flex-col gap-2" style={{ backgroundColor: "rgba(245,158,11,0.08)" }}>
+        <div className="flex items-center justify-between text-xs font-medium" style={{ color: "#e87600" }}>
+          <span>📺 광고 시청 중...</span>
+          <span>{remainingSeconds}초</span>
         </div>
-        <span className="ml-auto text-[9px] text-gray-300 dark:text-gray-600 border border-gray-200 dark:border-gray-600 rounded px-1">광고</span>
+        <ProgressBar progress={progress / 100} size="light" color="#F59E0B" animate />
       </div>
-
-      {/* 리워드 광고 버튼 */}
-      <div className="p-3">
-        {phase === "loading" ? (
-          <div className="py-3 px-4 rounded-2xl bg-gray-100 dark:bg-gray-700 flex items-center justify-center gap-2">
-            <span className="animate-spin text-sm">⏳</span>
-            <span className="text-xs text-gray-400 font-medium">광고 불러오는 중...</span>
-          </div>
-        ) : phase === "watching" && !supported ? (
-          <div className="py-3 px-4 rounded-2xl bg-yellow-50 dark:bg-yellow-900/20 flex flex-col gap-2">
-            <div className="flex items-center justify-between text-xs text-yellow-700 dark:text-yellow-400 font-medium">
-              <span>📺 광고 시청 중...</span>
-              <span>{remainingSeconds}초</span>
-            </div>
-            <ProgressBar progress={progress / 100} size="light" color="#F59E0B" animate />
-          </div>
-        ) : adAvailable ? (
-          <Button
-            display="full"
-            color="primary"
-            size="large"
-            onClick={handleWatch}
-
-          >
-            📺 광고 보고 성장 XP +50 받기
-          </Button>
-        ) : (
-          <div className="py-3 px-4 rounded-2xl bg-gray-100 dark:bg-gray-700 flex items-center justify-center gap-2">
-            <span>✅</span>
-            <span className="text-xs text-gray-400 dark:text-gray-500 font-medium">1시간 후 광고 다시 볼 수 있어요</span>
-          </div>
-        )}
+    );
+  }
+  if (!adAvailable) {
+    return (
+      <div className="py-3 px-4 rounded-2xl flex items-center justify-center gap-2" style={{ backgroundColor: "var(--toss-surface-high)" }}>
+        <span>✅</span>
+        <span className="text-xs font-medium" style={{ color: "var(--toss-on-surface-variant)" }}>1시간 후 광고 다시 볼 수 있어요</span>
       </div>
-    </div>
+    );
+  }
+  return (
+    <Button display="full" color="primary" size="large" onClick={handleWatch}>
+      📺 광고 보고 성장 XP +50 받기
+    </Button>
   );
 }

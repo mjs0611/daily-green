@@ -1,6 +1,5 @@
 "use client";
 import { useState, useRef, useEffect } from "react";
-import { Button } from "@toss/tds-mobile";
 
 interface Props {
   onStart: (plantName?: string) => void;
@@ -31,9 +30,7 @@ export default function Onboarding({ onStart }: Props) {
   const [name, setName] = useState("");
   const [featureVisible, setFeatureVisible] = useState(false);
   const touchStartX = useRef(0);
-  const containerRef = useRef<HTMLDivElement>(null);
 
-  // Trigger feature cards animation when entering step 1
   useEffect(() => {
     if (step === 1) {
       setFeatureVisible(false);
@@ -44,7 +41,6 @@ export default function Onboarding({ onStart }: Props) {
 
   const goNext = () => setStep(s => Math.min(s + 1, TOTAL_STEPS - 1));
   const goPrev = () => setStep(s => Math.max(s - 1, 0));
-
   const handleStart = () => onStart(name.trim() || undefined);
 
   const handleTouchStart = (e: React.TouchEvent) => {
@@ -64,94 +60,165 @@ export default function Onboarding({ onStart }: Props) {
 
   return (
     <div
-      className="min-h-screen bg-gradient-to-b from-emerald-50 to-white dark:from-[#09100D] dark:to-[#09100D] flex flex-col overflow-hidden"
+      className="min-h-screen flex flex-col overflow-hidden"
+      style={{ backgroundColor: "#fbf9f8" }}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
     >
-      {/* Top bar: back + progress dots */}
-      <div className="flex items-center justify-between px-5 pt-12 pb-4">
+      {/* Progress dots */}
+      <div className="flex justify-center gap-2 pt-14 pb-2">
+        {Array.from({ length: TOTAL_STEPS }).map((_, i) => (
+          <div
+            key={i}
+            className="rounded-full transition-all duration-300"
+            style={{
+              width: i === step ? 24 : 8,
+              height: 8,
+              backgroundColor:
+                i === step ? "#004ecb" : i < step ? "#b3c5ff" : "#eae8e7",
+            }}
+          />
+        ))}
+      </div>
+
+      {/* Back button */}
+      <div className="h-10 flex items-center px-5">
         <button
           onClick={goPrev}
-          className={`text-gray-400 dark:text-gray-500 transition-opacity duration-200 p-1 ${step === 0 ? "opacity-0 pointer-events-none" : "opacity-100"}`}
+          className="transition-opacity duration-200 p-1"
+          style={{
+            opacity: step === 0 ? 0 : 1,
+            pointerEvents: step === 0 ? "none" : "auto",
+            color: "#424656",
+          }}
         >
           <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
             <path strokeLinecap="round" strokeLinejoin="round" d="M15 19l-7-7 7-7" />
           </svg>
         </button>
-
-        <div className="flex items-center gap-1.5">
-          {Array.from({ length: TOTAL_STEPS }).map((_, i) => (
-            <div
-              key={i}
-              className={`rounded-full transition-all duration-300 ${
-                i === step
-                  ? "w-6 h-2 bg-emerald-500"
-                  : i < step
-                  ? "w-2 h-2 bg-emerald-300 dark:bg-emerald-700"
-                  : "w-2 h-2 bg-gray-200 dark:bg-gray-700"
-              }`}
-            />
-          ))}
-        </div>
-
-        <div className="w-7" /> {/* spacer */}
       </div>
 
       {/* Slides */}
-      <div ref={containerRef} className="flex-1 overflow-hidden">
+      <div className="flex-1 overflow-hidden">
         <div
           className="flex h-full"
           style={{
-            transform: `translateX(-${step * 100}%)`,
+            transform: `translateX(-${step * (100 / TOTAL_STEPS)}%)`,
             transition: "transform 0.38s cubic-bezier(0.4, 0, 0.2, 1)",
             width: `${TOTAL_STEPS * 100}%`,
           }}
         >
           {/* ── Step 0: Hero ── */}
-          <div className="flex flex-col items-center justify-center px-8 text-center" style={{ width: `${100 / TOTAL_STEPS}%` }}>
-            <div
-              className="mb-8 relative"
-              style={{ animation: "breathe 4s ease-in-out infinite" }}
-            >
+          <div
+            className="flex flex-col items-center justify-center px-8"
+            style={{ width: `${100 / TOTAL_STEPS}%` }}
+          >
+            <div className="mb-8 flex flex-col items-center gap-2 text-center">
+              <h1
+                className="text-3xl font-extrabold tracking-tight"
+                style={{
+                  color: "#1b1c1c",
+                  fontFamily: "var(--font-headline, 'Plus Jakarta Sans', sans-serif)",
+                }}
+              >
+                🌿 플랜티
+              </h1>
+              <p className="text-base leading-relaxed" style={{ color: "#424656" }}>
+                매일 조금씩 돌봐주는<br />나만의 가상 식물이에요
+              </p>
+            </div>
+
+            {/* Plant image with floating card */}
+            <div className="relative w-full max-w-[300px] aspect-square flex items-center justify-center">
+              {/* Ambient glow */}
+              <div
+                className="absolute inset-0 rounded-full blur-3xl opacity-40 pointer-events-none"
+                style={{ background: "radial-gradient(circle, rgba(99,253,187,0.35), transparent 70%)" }}
+              />
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src="/plants/stage_1_seed_cute.png"
                 alt="씨앗"
-                className="w-52 h-52 object-contain drop-shadow-xl"
+                className="w-4/5 h-4/5 object-contain drop-shadow-2xl relative z-10"
+                style={{ animation: "breathe 4s ease-in-out infinite" }}
               />
-              {/* Glow */}
-              <div className="absolute inset-0 rounded-full bg-emerald-300/20 blur-2xl -z-10 scale-75" />
+              {/* Floating health card */}
+              <div
+                className="absolute -bottom-4 right-0 z-20 flex items-center gap-2.5 rounded-2xl px-3 py-2.5"
+                style={{
+                  backgroundColor: "#ffffff",
+                  boxShadow: "0 12px 32px -4px rgba(0,84,216,0.10)",
+                }}
+              >
+                <div
+                  className="w-9 h-9 rounded-full flex items-center justify-center flex-shrink-0"
+                  style={{ backgroundColor: "#63fdbb" }}
+                >
+                  <span className="text-base">💧</span>
+                </div>
+                <div>
+                  <p
+                    className="text-[10px] font-bold uppercase tracking-wider"
+                    style={{ color: "#424656" }}
+                  >
+                    Health
+                  </p>
+                  <div
+                    className="w-20 h-2 rounded-full mt-1 overflow-hidden"
+                    style={{ backgroundColor: "#eae8e7" }}
+                  >
+                    <div
+                      className="h-full rounded-full"
+                      style={{
+                        width: "85%",
+                        background: "linear-gradient(to right, #006c49, #63fdbb)",
+                      }}
+                    />
+                  </div>
+                </div>
+              </div>
             </div>
-            <h1 className="text-4xl font-bold text-gray-800 dark:text-white mb-3 tracking-tight">
-              플랜티 🌿
-            </h1>
-            <p className="text-base text-gray-500 dark:text-gray-400 leading-relaxed">
-              매일 조금씩 돌봐주는<br />나만의 가상 식물이에요
-            </p>
           </div>
 
           {/* ── Step 1: How it works ── */}
-          <div className="flex flex-col justify-center px-5" style={{ width: `${100 / TOTAL_STEPS}%` }}>
-            <h2 className="text-2xl font-bold text-gray-800 dark:text-white text-center mb-6">
+          <div
+            className="flex flex-col justify-center px-5"
+            style={{ width: `${100 / TOTAL_STEPS}%` }}
+          >
+            <h2
+              className="text-2xl font-extrabold text-center mb-6"
+              style={{
+                color: "#1b1c1c",
+                fontFamily: "var(--font-headline, 'Plus Jakarta Sans', sans-serif)",
+              }}
+            >
               이렇게 키워요
             </h2>
             <div className="flex flex-col gap-3">
               {FEATURES.map((f, i) => (
                 <div
                   key={f.emoji}
-                  className="flex items-start gap-4 bg-white dark:bg-gray-800/60 rounded-2xl p-4 shadow-sm border border-gray-100 dark:border-gray-700/50"
+                  className="flex items-start gap-4 rounded-2xl p-4"
                   style={{
+                    backgroundColor: "#ffffff",
+                    boxShadow: "0 4px 16px -4px rgba(0,84,216,0.06)",
                     opacity: featureVisible ? 1 : 0,
                     transform: featureVisible ? "translateY(0)" : "translateY(16px)",
                     transition: `opacity 0.4s ease ${i * 0.1}s, transform 0.4s ease ${i * 0.1}s`,
                   }}
                 >
-                  <div className="w-12 h-12 rounded-xl bg-emerald-50 dark:bg-emerald-900/30 flex items-center justify-center text-2xl flex-shrink-0">
+                  <div
+                    className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl flex-shrink-0"
+                    style={{ backgroundColor: "#f5f3f3" }}
+                  >
                     {f.emoji}
                   </div>
                   <div>
-                    <p className="text-sm font-bold text-gray-800 dark:text-white">{f.title}</p>
-                    <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 leading-relaxed whitespace-pre-line">
+                    <p className="text-sm font-bold" style={{ color: "#1b1c1c" }}>{f.title}</p>
+                    <p
+                      className="text-xs mt-1 leading-relaxed whitespace-pre-line"
+                      style={{ color: "#424656" }}
+                    >
                       {f.desc}
                     </p>
                   </div>
@@ -161,23 +228,27 @@ export default function Onboarding({ onStart }: Props) {
           </div>
 
           {/* ── Step 2: Name your plant ── */}
-          <div className="flex flex-col items-center justify-center px-8 text-center" style={{ width: `${100 / TOTAL_STEPS}%` }}>
-            <div
-              className="mb-6 relative"
+          <div
+            className="flex flex-col items-center justify-center px-8 text-center"
+            style={{ width: `${100 / TOTAL_STEPS}%` }}
+          >
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img
+              src="/plants/stage_1_seed_cute.png"
+              alt="씨앗"
+              className="w-32 h-32 object-contain drop-shadow-lg mb-6"
               style={{ animation: "breathe 4s ease-in-out infinite" }}
+            />
+            <h2
+              className="text-2xl font-extrabold mb-2"
+              style={{
+                color: "#1b1c1c",
+                fontFamily: "var(--font-headline, 'Plus Jakarta Sans', sans-serif)",
+              }}
             >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src="/plants/stage_1_seed_cute.png"
-                alt="씨앗"
-                className="w-36 h-36 object-contain drop-shadow-lg"
-              />
-            </div>
-
-            <h2 className="text-2xl font-bold text-gray-800 dark:text-white mb-2">
               이 씨앗에게<br />이름을 지어줄까요?
             </h2>
-            <p className="text-sm text-gray-400 dark:text-gray-500 mb-6">
+            <p className="text-sm mb-6" style={{ color: "#424656" }}>
               나중에 언제든 바꿀 수 있어요
             </p>
 
@@ -187,22 +258,37 @@ export default function Onboarding({ onStart }: Props) {
                 onChange={e => setName(e.target.value)}
                 placeholder="예: 봄이, 초록이, 미미..."
                 maxLength={12}
-                className="w-full border-2 border-gray-200 dark:border-gray-700 focus:border-emerald-400 dark:focus:border-emerald-500 rounded-2xl px-4 py-3.5 text-base bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none transition-colors text-center placeholder:text-gray-300 dark:placeholder:text-gray-600"
+                className="w-full rounded-2xl px-4 py-4 text-base focus:outline-none transition-all duration-200 text-center"
+                style={{
+                  backgroundColor: "#f5f3f3",
+                  color: "#1b1c1c",
+                  border: "none",
+                  fontFamily: "inherit",
+                }}
+                onFocus={e => {
+                  e.currentTarget.style.boxShadow = "0 0 0 2px rgba(0,78,203,0.25)";
+                  e.currentTarget.style.backgroundColor = "#ffffff";
+                }}
+                onBlur={e => {
+                  e.currentTarget.style.boxShadow = "none";
+                  e.currentTarget.style.backgroundColor = "#f5f3f3";
+                }}
               />
               {name && (
                 <button
                   onClick={() => setName("")}
-                  className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-300 dark:text-gray-600 hover:text-gray-500 text-lg"
+                  className="absolute right-4 top-1/2 -translate-y-1/2 text-lg"
+                  style={{ color: "#9ca3af" }}
                 >
                   ×
                 </button>
               )}
             </div>
             <div className="flex justify-between w-full mt-2 px-1">
-              <span className="text-[11px] text-gray-300 dark:text-gray-600">
+              <span className="text-[11px]" style={{ color: "#9ca3af" }}>
                 {name.trim() ? `"${name.trim()}"` : "이름 없이도 괜찮아요"}
               </span>
-              <span className="text-[11px] text-gray-300 dark:text-gray-600">{name.length}/12</span>
+              <span className="text-[11px]" style={{ color: "#9ca3af" }}>{name.length}/12</span>
             </div>
           </div>
         </div>
@@ -210,24 +296,38 @@ export default function Onboarding({ onStart }: Props) {
 
       {/* Bottom CTA */}
       <div className="px-5 pb-12 pt-4 flex flex-col gap-2">
-        <Button
-          display="full"
-          color="primary"
-          size="xlarge"
+        <button
           onClick={step < TOTAL_STEPS - 1 ? goNext : handleStart}
+          className="w-full py-5 rounded-2xl text-base font-bold text-white transition-all duration-200 active:scale-[0.98]"
+          style={{
+            background: "linear-gradient(135deg, #004ecb 0%, #0064ff 100%)",
+            boxShadow: "0 12px 32px -4px rgba(0,84,216,0.20)",
+            fontFamily: "var(--font-headline, sans-serif)",
+          }}
         >
           {ctaLabel}
-        </Button>
+        </button>
 
         {step === TOTAL_STEPS - 1 && (
           <button
             onClick={() => onStart(undefined)}
-            className="text-sm text-gray-400 dark:text-gray-500 py-2 transition-colors hover:text-gray-600 dark:hover:text-gray-300"
+            className="text-sm py-2 transition-colors"
+            style={{ color: "#424656" }}
           >
             이름 없이 시작하기
           </button>
         )}
       </div>
+
+      {/* Ambient blobs */}
+      <div
+        className="fixed top-[15%] left-[8%] w-16 h-16 rounded-full blur-2xl pointer-events-none"
+        style={{ backgroundColor: "rgba(99,253,187,0.18)" }}
+      />
+      <div
+        className="fixed bottom-[22%] right-[5%] w-28 h-28 rounded-full blur-3xl pointer-events-none"
+        style={{ backgroundColor: "rgba(179,197,255,0.18)" }}
+      />
     </div>
   );
 }
