@@ -159,9 +159,9 @@ export default function ProfilePage({ plant, theme, onToggleTheme, onReset }: Pr
           onClick={onToggleTheme}
         />
         <div style={{ height: 1, backgroundColor: "var(--toss-surface-high)" }} className="mx-5" />
-        <SettingRow label="개인정보 처리방침" />
+        <SettingRow label="개인정보 처리방침" onClick={() => window.open("/privacy", "_blank")} />
         <div style={{ height: 1, backgroundColor: "var(--toss-surface-high)" }} className="mx-5" />
-        <SettingRow label="이용약관" />
+        <SettingRow label="이용약관" onClick={() => window.open("/terms", "_blank")} />
       </div>
 
       {/* Danger zone */}
