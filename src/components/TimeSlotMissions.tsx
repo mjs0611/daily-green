@@ -24,10 +24,11 @@ export default function TimeSlotMissions({
   total,
 }: Props) {
   const currentSlot = getCurrentTimeSlot();
-  const meta = getSlotMeta(currentSlot);
-  const missionIds = timeSlotMissions[currentSlot] ?? [];
+  const [activeSlot, setActiveSlot] = useState<TimeSlot>(currentSlot);
+  const meta = getSlotMeta(activeSlot);
+  const missionIds = timeSlotMissions[activeSlot] ?? [];
   const slotCompleted = missionIds.filter(id =>
-    completedMissions.includes(`${currentSlot}_${id}`)
+    completedMissions.includes(`${activeSlot}_${id}`)
   ).length;
   const allSlotsCompleted = totalCompleted >= total;
 
@@ -51,31 +52,35 @@ export default function TimeSlotMissions({
         </span>
       </div>
 
-      {/* 시간대 탭 */}
-      <div className="flex gap-1.5 px-4 pb-3">
+      {/* Segmented control tabs */}
+      <div
+        className="flex gap-1 mx-4 mb-3 p-1 rounded-full"
+        style={{ backgroundColor: "var(--toss-surface-high, #eae8e7)" }}
+      >
         {ALL_SLOTS.map((slot) => {
           const m = getSlotMeta(slot);
-          const isCurrent = slot === currentSlot;
+          const isActive = slot === activeSlot;
+          const slotMissionIds = timeSlotMissions[slot] ?? [];
           const slotDone =
-            (timeSlotMissions[slot] ?? []).filter(id =>
-              completedMissions.includes(`${slot}_${id}`)
-            ).length === (timeSlotMissions[slot] ?? []).length &&
-            (timeSlotMissions[slot] ?? []).length > 0;
+            slotMissionIds.length > 0 &&
+            slotMissionIds.every(id => completedMissions.includes(`${slot}_${id}`));
           return (
-            <div
+            <button
               key={slot}
-              className="flex-1 text-center py-1.5 rounded-xl text-[11px] font-bold"
+              onClick={() => setActiveSlot(slot)}
+              className="flex-1 text-center py-2 rounded-full text-[11px] font-bold transition-all duration-200"
               style={{
-                backgroundColor: isCurrent
-                  ? "var(--toss-primary)"
+                backgroundColor: isActive ? "var(--toss-card-bg, #ffffff)" : "transparent",
+                color: isActive
+                  ? "var(--toss-on-surface, #1b1c1c)"
                   : slotDone
-                  ? "rgba(0,78,203,0.08)"
-                  : "var(--toss-surface-low)",
-                color: isCurrent ? "#fff" : slotDone ? "var(--toss-primary)" : "var(--toss-on-surface-variant)",
+                  ? "var(--toss-secondary, #006c49)"
+                  : "var(--toss-on-surface-variant, #424656)",
+                boxShadow: isActive ? "0 1px 4px rgba(0,0,0,0.10)" : "none",
               }}
             >
-              {m.emoji} {m.name}
-            </div>
+              {slotDone ? "✅" : m.emoji} {m.name}
+            </button>
           );
         })}
       </div>
@@ -85,7 +90,7 @@ export default function TimeSlotMissions({
         {missionIds.map((missionId, idx) => {
           const mission = getMissionById(missionId);
           if (!mission) return null;
-          const slotId = `${currentSlot}_${missionId}`;
+          const slotId = `${activeSlot}_${missionId}`;
           return (
             <div key={slotId}>
               {idx > 0 && (
@@ -103,7 +108,7 @@ export default function TimeSlotMissions({
 
       {/* Completion message */}
       {slotCompleted === missionIds.length && missionIds.length > 0 && (
-        <div className="mx-4 mb-3 p-3 rounded-xl text-center"
+        <div className="mx-4 mb-3 mt-1 p-3 rounded-xl text-center"
           style={{ backgroundColor: "rgba(0,108,73,0.08)" }}
         >
           <p className="text-sm font-semibold" style={{ color: "var(--toss-secondary)" }}>
@@ -111,7 +116,6 @@ export default function TimeSlotMissions({
           </p>
         </div>
       )}
-
 
       {selected && (
         <MissionInteractionModal

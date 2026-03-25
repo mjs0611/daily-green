@@ -44,7 +44,7 @@ export const PLANT_TYPE_INFO: Record<PlantType, { name: string; emoji: string; d
   monstera:  { name: '몬스테라',  emoji: '🍃', desc: '멋진 구멍 잎을 가진 몬스테라' },
 };
 
-export const PLANT_TYPE_ORDER: PlantType[] = ['green', 'flower', 'cactus', 'sunflower', 'rose', 'bamboo', 'mushroom', 'succulent', 'clover', 'monstera'];
+export const PLANT_TYPE_ORDER: PlantType[] = ['green', 'flower', 'cactus', 'sunflower', 'rose', 'bamboo', 'clover', 'monstera'];
 
 export const GROWTH_EVENTS = [
   { emoji: '🦋', message: '나비가 찾아왔어요!',     xpBonus: 5 },

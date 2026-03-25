@@ -8,12 +8,18 @@ dest_dir = "/Users/junseungmo/Documents/03_Resources/repos/planty/public/plants"
 type_map = {
     "Cactus": "cactus",
     "Green": "green",
-    "Pink": "flower"
+    "Pink": "flower",
+    "Sunflower": "sunflower",
+    "Rose": "rose",
+    "Bamboo": "bamboo",
+    "Mushroom": "mushroom",
+    "Succulent": "succulent",
+    "Clover": "clover",
+    "Monstera": "monstera"
 }
 
-os.makedirs(os.path.join(dest_dir, "cactus"), exist_ok=True)
-os.makedirs(os.path.join(dest_dir, "green"), exist_ok=True)
-os.makedirs(os.path.join(dest_dir, "flower"), exist_ok=True)
+for plant_type in type_map.values():
+    os.makedirs(os.path.join(dest_dir, plant_type), exist_ok=True)
 
 for file_path in glob.glob(os.path.join(src_dir, "*.PNG")):
     filename = os.path.basename(file_path)

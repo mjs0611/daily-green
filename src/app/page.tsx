@@ -113,7 +113,7 @@ const { toast, openToast } = useToast();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  const handleOnboardingStart = useCallback((plantName?: string, plantType?: PlantState["plantType"]) => {
+  const handleOnboardingStart = useCallback((plantName?: string) => {
     localStorage.setItem(ONBOARDED_KEY, "true");
     setOnboarded(true);
     setPlant(prev => {
@@ -121,7 +121,6 @@ const { toast, openToast } = useToast();
       return {
         ...prev,
         ...(plantName ? { name: plantName } : {}),
-        ...(plantType ? { plantType } : {}),
       };
     });
   }, []);
@@ -309,7 +308,7 @@ const { toast, openToast } = useToast();
 
   // ── Render guards ───────────────────────────────────────────
   if (showSplash) return <Splash onDone={() => setShowSplash(false)} />;
-  if (!onboarded) return <Onboarding onStart={handleOnboardingStart} />;
+  if (!onboarded) return <Onboarding onStart={handleOnboardingStart} plantType={plant?.plantType} />;
   if (!plant) {
     return (
       <div className="flex items-center justify-center min-h-screen">

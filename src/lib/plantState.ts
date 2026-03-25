@@ -54,11 +54,15 @@ function refreshShieldIfNewWeek(state: PlantState): PlantState {
   return { ...state, streakShields: newShields, lastShieldRefillWeek: thisWeek };
 }
 
+function getRandomInitialPlantType(): PlantType {
+  return PLANT_TYPE_ORDER[Math.floor(Math.random() * PLANT_TYPE_ORDER.length)];
+}
+
 export function getInitialState(): PlantState {
   const today = format(new Date(), 'yyyy-MM-dd');
   return {
     stage: 'seed',
-    plantType: 'green',
+    plantType: getRandomInitialPlantType(),
     garden: [],
     stats: { water: 80, sunlight: 80, health: 80 },
     xp: 0,
